@@ -33,6 +33,14 @@ archives:
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
+  # The Registry refuses a release in which any published asset is missing from the
+  # checksum file ("missing SHA256 checksum for ..._manifest.json"). Listing the
+  # manifest under `release.extra_files` alone is NOT enough — that only uploads it.
+  # It has to be hashed here as well, and under the SAME name it is uploaded with,
+  # or the checksum entry won't match the asset.
+  extra_files:
+    - glob: terraform-registry-manifest.json
+      name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
 
 signs:
   - artifacts: checksum
