@@ -87,8 +87,37 @@ func (p *openinfraProvider) Resources(context.Context) []func() resource.Resourc
 	}
 }
 
+// crdKinds is every open-infra CRD: terraform type suffix, plural, Kind. Data
+// sources are generated for all of them so the whole platform is readable even
+// where a typed resource doesn't exist yet.
+//
+// KEEP IN SYNC with the CRDs in open-infra (platform/abstraction/*-xrd.yaml).
+// Adding a kind there and forgetting it here means it simply isn't addressable
+// from Terraform — there's no error, it's just missing.
+var crdKinds = []struct{ typeName, plural, kind string }{
+	{"application", "applications", "Application"},
+	{"dataflow", "dataflows", "DataFlow"},
+	{"directory", "directories", "Directory"},
+	{"fault_injection", "faultinjections", "FaultInjection"},
+	{"file_share", "fileshares", "FileShare"},
+	{"function", "functions", "Function"},
+	{"migration", "migrations", "Migration"},
+	{"model", "models", "Model"},
+	{"query", "queries", "Query"},
+	{"replication", "replications", "Replication"},
+	{"security_group", "securitygroups", "SecurityGroup"},
+	{"stream", "streams", "Stream"},
+	{"virtual_machine", "virtualmachines", "VirtualMachine"},
+	{"vm_image", "vmimages", "VmImage"},
+	{"volume", "volumes", "Volume"},
+}
+
 func (p *openinfraProvider) DataSources(context.Context) []func() datasource.DataSource {
-	return nil
+	out := make([]func() datasource.DataSource, 0, len(crdKinds))
+	for _, k := range crdKinds {
+		out = append(out, newDataSource(k.typeName, k.plural, k.kind))
+	}
+	return out
 }
 
 func (p *openinfraProvider) Functions(context.Context) []func() function.Function {
