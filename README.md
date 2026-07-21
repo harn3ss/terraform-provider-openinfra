@@ -4,12 +4,11 @@ A Terraform provider for [open-infra](https://github.com/harn3ss/open-infra) —
 open-infra resources (applications, databases, virtual machines, functions, volumes, …) in
 HCL instead of `kind:` manifests.
 
-> **Status: complete but unpublished.** You can use it today via a
-> [dev override](PUBLISHING.md#using-the-provider-before-it-is-published) — no Registry needed.
-> Every open-infra kind is addressable as a typed
-> resource and a data source, and the resource lifecycle is verified against a live
-> cluster. It is not on the Terraform Registry yet — that needs this repository made
-> **public** plus release signing keys. See [Roadmap](#roadmap).
+> **Status: complete, not yet on the Terraform Registry.** Every open-infra kind is
+> addressable as a typed resource and a data source, and the resource lifecycle is
+> verified against a live cluster. Until it is published you can use it via a
+> [dev override](CONTRIBUTING.md#running-the-provider-against-a-real-cluster) — no
+> Registry needed.
 
 ## Why a provider
 
@@ -24,7 +23,7 @@ capability:
 - **Mixing with the rest of your estate** — reference an open-infra database from the same
   config that manages DNS, TLS, or a cloud account.
 
-## Example (target shape)
+## Example
 
 ```hcl
 provider "openinfra" {
@@ -54,13 +53,32 @@ output "orders_connection_secret" {
 
 ## What's implemented
 
-**Resources** (full CRUD + `terraform import` via `namespace/name`):
+**Resources** — every kind, with full CRUD and `terraform import` via `namespace/name`:
 
 | Resource | Maps to |
 |---|---|
 | `openinfra_application` | `kind: Application` (container workload) |
 | `openinfra_database` | `kind: Application` with `spec.database` (postgres/mysql/mongo/babelfish) |
 | `openinfra_virtual_machine` | `kind: VirtualMachine` |
+| `openinfra_function` | `kind: Function` |
+| `openinfra_volume` | `kind: Volume` |
+| `openinfra_file_share` | `kind: FileShare` |
+| `openinfra_security_group` | `kind: SecurityGroup` |
+| `openinfra_model` | `kind: Model` |
+| `openinfra_query` | `kind: Query` |
+| `openinfra_migration` | `kind: Migration` |
+| `openinfra_replication` | `kind: Replication` |
+| `openinfra_dataflow` | `kind: DataFlow` |
+| `openinfra_stream` | `kind: Stream` |
+| `openinfra_directory` | `kind: Directory` |
+| `openinfra_fault_injection` | `kind: FaultInjection` |
+| `openinfra_vm_image` | `kind: VmImage` |
+
+Sixteen resources across fifteen kinds — `application` and `database` are two front doors
+onto `kind: Application`, because a managed database is a data-only Application and giving
+it its own resource reads far better in HCL.
+
+See [`examples/full-stack.tf`](examples/full-stack.tf) for most of these in one file.
 
 **Data sources** — one for **every** open-infra CRD (15): `application`, `dataflow`,
 `directory`, `fault_injection`, `file_share`, `function`, `migration`, `model`, `query`,
@@ -83,29 +101,24 @@ reading what's already there.
 
 ## Keeping in sync with open-infra
 
-> ⚠️ **This repository hand-mirrors open-infra's CRD schemas, and nothing enforces it.**
+> ⚠️ **This repository mirrors open-infra's CRD schemas by hand, and nothing enforces it.**
+> A field missing here cannot be expressed in HCL — silently absent, not an error.
 
-When you change the platform's API surface, update this provider in the same change:
-
-- **New `kind:`** → add it to `crdKinds` in `internal/provider/provider.go` (gets a data source
-  automatically), and add a typed resource if it should be authored from HCL.
-- **New/renamed `spec` field** on a typed resource → update its schema *and* its `manifest()`
-  mapping, or the field cannot be expressed in HCL.
-- **Renamed connection Secret** → update `connectionSecretName()` in `resource_database.go`,
-  which duplicates the composition's per-engine naming. `TestConnectionSecretName` pins the
-  current values so the coupling is at least visible.
+Most changes are one line in [`internal/provider/kinds.go`](internal/provider/kinds.go).
+[CONTRIBUTING.md](CONTRIBUTING.md#adding-or-changing-a-resource) has the mapping table and
+the three things that are easy to get wrong.
 
 ## Development
 
 ```bash
-go build ./...          # compile
-go test ./...           # unit tests (no cluster needed)
-go generate ./...       # regenerate docs/ with tfplugindocs
-gofmt -l .              # must be empty
-
-# acceptance tests run against a REAL cluster and create/destroy resources
-TF_ACC=1 KUBECONFIG=/etc/rancher/k3s/k3s.yaml go test ./internal/provider/ -v
+go build ./...       # compile
+go test ./...        # unit tests — no cluster needed
+go generate ./...    # regenerate docs/
+gofmt -l .           # must print nothing
 ```
+
+Dev overrides, acceptance tests against a real cluster, and how to add a kind:
+[CONTRIBUTING.md](CONTRIBUTING.md). Cutting a release: [RELEASING.md](RELEASING.md).
 
 ## How the resources are built
 
@@ -149,10 +162,9 @@ sends the full desired spec.
 - [x] Acceptance tests exercising real create / update / import / destroy cycles against
       a live cluster, asserting against the **live CR spec** rather than only against
       Terraform state
-- [ ] **Terraform Registry publication** — everything that can be prepared is prepared
-      (protocol manifest, signed-release workflow, verified snapshot build, clean history
-      audit). What remains needs decisions and credentials: making this repository
-      **public** and generating a signing key. Runbook: [PUBLISHING.md](PUBLISHING.md).
+- [ ] **Terraform Registry publication** — the build side is done and verified: protocol
+      manifest, signed-release workflow, and a snapshot build producing every archive the
+      Registry needs. What remains is credentials and a visibility change, not code.
 
 ### Not covered, on purpose
 
@@ -162,7 +174,7 @@ sends the full desired spec.
   `kubectl` for now.
 - **Acceptance tests for `fault_injection` and `query`.** Applying a FaultInjection
   breaks running workloads on purpose and a Query launches a job; neither belongs in a
-  suite someone might run against a cluster they care about. The schemas are covered by
+  suite someone might point at a cluster they care about. Their schemas are covered by
   unit tests.
 
 ## License
