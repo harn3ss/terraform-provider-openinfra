@@ -1,0 +1,59 @@
+# ── Go build output ─────────────────────────────────────────────────────────
+terraform-provider-openinfra
+terraform-provider-openinfra.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/bin/
+/build/
+
+# GoReleaser (release artifacts + checksums/signatures)
+/dist/
+
+# Go workspace / module scratch
+go.work
+go.work.sum
+
+# ── Terraform ───────────────────────────────────────────────────────────────
+# Local state, plans and provider caches from running examples/acceptance tests.
+**/.terraform/*
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Variable files may hold cluster endpoints/credentials — never commit them.
+*.tfvars
+*.tfvars.json
+
+# CLI config that can carry credentials / dev_overrides
+.terraformrc
+terraform.rc
+
+# ── Local dev / secrets ─────────────────────────────────────────────────────
+# Kubeconfigs and tokens used to talk to a cluster during development.
+kubeconfig
+*.kubeconfig
+.env
+.env.*
+*.pem
+*.key
+
+# ── Editors / OS ────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
