@@ -4,11 +4,21 @@ A Terraform provider for [open-infra](https://github.com/harn3ss/open-infra) —
 open-infra resources (applications, databases, virtual machines, functions, volumes, …) in
 HCL instead of `kind:` manifests.
 
-> **Status: complete, not yet on the Terraform Registry.** Every open-infra kind is
-> addressable as a typed resource and a data source, and the resource lifecycle is
-> verified against a live cluster. Until it is published you can use it via a
-> [dev override](CONTRIBUTING.md#running-the-provider-against-a-real-cluster) — no
-> Registry needed.
+[![Terraform Registry](https://img.shields.io/badge/terraform-harn3ss%2Fopeninfra-7B42BC?logo=terraform)](https://registry.terraform.io/providers/harn3ss/openinfra/latest)
+
+```hcl
+terraform {
+  required_providers {
+    openinfra = {
+      source  = "harn3ss/openinfra"
+      version = "~> 0.1"
+    }
+  }
+}
+```
+
+Every open-infra kind is addressable as a typed resource and a data source. The resource
+lifecycle is verified against a live cluster on every change.
 
 ## Why a provider
 
@@ -149,7 +159,7 @@ to a field you don't manage in HCL, or to anything inside a nested block, is not
 detected.** The next apply that touches the resource corrects it, since apply always
 sends the full desired spec.
 
-## Roadmap
+## Status
 
 - [x] Provider skeleton (terraform-plugin-framework), Kubernetes client, provider config
 - [x] Resources for `application`, `database`, `virtual_machine` (CRUD + import)
@@ -162,9 +172,10 @@ sends the full desired spec.
 - [x] Acceptance tests exercising real create / update / import / destroy cycles against
       a live cluster, asserting against the **live CR spec** rather than only against
       Terraform state
-- [ ] **Terraform Registry publication** — the build side is done and verified: protocol
-      manifest, signed-release workflow, and a snapshot build producing every archive the
-      Registry needs. What remains is credentials and a visibility change, not code.
+- [x] **Published to the Terraform Registry** as
+      [`harn3ss/openinfra`](https://registry.terraform.io/providers/harn3ss/openinfra/latest)
+      — GPG-signed releases across 13 OS/arch targets, verified by a clean-room
+      `terraform init` + `apply` against a real cluster.
 
 ### Not covered, on purpose
 
