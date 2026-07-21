@@ -80,11 +80,18 @@ func (p *openinfraProvider) Configure(ctx context.Context, req provider.Configur
 }
 
 func (p *openinfraProvider) Resources(context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
+	// Application, Database and VirtualMachine are hand-written: they carry behaviour a
+	// schema table cannot express (per-engine connection-secret naming, start/stop
+	// semantics). Everything else is generated from the kindSpec table in kinds.go.
+	out := []func() resource.Resource{
 		NewApplicationResource,
 		NewDatabaseResource,
 		NewVirtualMachineResource,
 	}
+	for _, k := range genericKinds {
+		out = append(out, newGenericResource(k))
+	}
+	return out
 }
 
 // crdKinds is every open-infra CRD: terraform type suffix, plural, Kind. Data
