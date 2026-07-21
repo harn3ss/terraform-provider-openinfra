@@ -81,6 +81,8 @@ func (p *openinfraProvider) Configure(ctx context.Context, req provider.Configur
 
 func (p *openinfraProvider) Resources(context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewApplicationResource,
+		NewDatabaseResource,
 		NewVirtualMachineResource,
 	}
 }
