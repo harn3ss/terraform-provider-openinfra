@@ -1,0 +1,54 @@
+# GoReleaser config for a Terraform Registry provider.
+#
+# The Registry requires: one binary per OS/arch named
+# terraform-provider-{NAME}_v{VERSION}, a _SHA256SUMS file, and a GPG signature
+# of that checksum file. It also requires the repository to be PUBLIC.
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X main.version={{ .Version }}"
+    goos: [linux, darwin, windows, freebsd]
+    goarch: ["386", amd64, arm, arm64]
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: darwin
+        goarch: arm
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
+
+archives:
+  - formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
+  algorithm: sha256
+
+signs:
+  - artifacts: checksum
+    args:
+      # GPG_FINGERPRINT must match the key uploaded to the Terraform Registry.
+      - "--batch"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+
+release:
+  # The Registry ingests the tag; drafts are not visible to it.
+  draft: false
+
+changelog:
+  disable: true
