@@ -31,3 +31,16 @@ jobs:
 
       - name: test
         run: go test ./...
+
+      # The docs/ tree is generated from the provider schema. If it is regenerated
+      # here and differs, someone changed a schema without running `go generate` —
+      # and the Terraform Registry serves docs/ verbatim, so stale docs are shipped
+      # docs. Failing here is the only place this gets caught.
+      - name: docs are up to date
+        run: |
+          go generate ./...
+          if ! git diff --quiet -- docs/; then
+            echo "docs/ is stale — run 'go generate ./...' and commit the result:"
+            git --no-pager diff --stat -- docs/
+            exit 1
+          fi
