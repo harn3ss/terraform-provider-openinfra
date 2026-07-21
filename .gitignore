@@ -1,59 +1,54 @@
-# ── Go build output ─────────────────────────────────────────────────────────
-terraform-provider-openinfra
-terraform-provider-openinfra.exe
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
+
+*~
 /bin/
 /build/
-
-# GoReleaser (release artifacts + checksums/signatures)
-/dist/
-
-# Go workspace / module scratch
-go.work
-go.work.sum
-
-# ── Terraform ───────────────────────────────────────────────────────────────
-# Local state, plans and provider caches from running examples/acceptance tests.
-**/.terraform/*
-.terraform.lock.hcl
-*.tfstate
-*.tfstate.*
-*.tfplan
-crash.log
-crash.*.log
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-
-# Variable files may hold cluster endpoints/credentials — never commit them.
-*.tfvars
-*.tfvars.json
-
 # CLI config that can carry credentials / dev_overrides
-.terraformrc
-terraform.rc
-
-# ── Local dev / secrets ─────────────────────────────────────────────────────
-# Kubeconfigs and tokens used to talk to a cluster during development.
-kubeconfig
-*.kubeconfig
+crash.*.log
+crash.log
+/dist/
+dist/
+*.dll
+.DS_Store
+*.dylib
+# ── Editors / OS ────────────────────────────────────────────────────────────
 .env
 .env.*
-*.pem
-*.key
-
-# ── Editors / OS ────────────────────────────────────────────────────────────
+*.exe
+*.exe~
+# ── Go build output ─────────────────────────────────────────────────────────
+# GoReleaser (release artifacts + checksums/signatures)
+go.work
+# Go workspace / module scratch
+go.work.sum
 .idea/
-.vscode/
-*.swp
+*.key
+*.kubeconfig
+kubeconfig
+# Kubeconfigs and tokens used to talk to a cluster during development.
+# ── Local dev / secrets ─────────────────────────────────────────────────────
+# Local state, plans and provider caches from running examples/acceptance tests.
+*.out
+*_override.tf
+override.tf
+*_override.tf.json
+override.tf.json
+*.pem
+*.so
 *.swo
-*~
-.DS_Store
+*.swp
+**/.terraform/*
+# ── Terraform ───────────────────────────────────────────────────────────────
+.terraform.lock.hcl
+terraform-provider-openinfra
+terraform-provider-openinfra.exe
+.terraformrc
+terraform.rc
+*.test
+*.tfplan
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
 Thumbs.db
+# Variable files may hold cluster endpoints/credentials — never commit them.
+.vscode/
