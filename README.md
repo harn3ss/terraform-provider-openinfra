@@ -4,7 +4,9 @@ A Terraform provider for [open-infra](https://github.com/harn3ss/open-infra) —
 open-infra resources (applications, databases, virtual machines, functions, volumes, …) in
 HCL instead of `kind:` manifests.
 
-> **Status: complete but unpublished.** Every open-infra kind is addressable as a typed
+> **Status: complete but unpublished.** You can use it today via a
+> [dev override](PUBLISHING.md#using-the-provider-before-it-is-published) — no Registry needed.
+> Every open-infra kind is addressable as a typed
 > resource and a data source, and the resource lifecycle is verified against a live
 > cluster. It is not on the Terraform Registry yet — that needs this repository made
 > **public** plus release signing keys. See [Roadmap](#roadmap).
@@ -147,8 +149,10 @@ sends the full desired spec.
 - [x] Acceptance tests exercising real create / update / import / destroy cycles against
       a live cluster, asserting against the **live CR spec** rather than only against
       Terraform state
-- [ ] **Terraform Registry publication** — requires making this repository **public** and
-      adding the `GPG_PRIVATE_KEY` / `PASSPHRASE` secrets
+- [ ] **Terraform Registry publication** — everything that can be prepared is prepared
+      (protocol manifest, signed-release workflow, verified snapshot build, clean history
+      audit). What remains needs decisions and credentials: making this repository
+      **public** and generating a signing key. Runbook: [PUBLISHING.md](PUBLISHING.md).
 
 ### Not covered, on purpose
 

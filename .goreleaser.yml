@@ -49,6 +49,14 @@ signs:
 release:
   # The Registry ingests the tag; drafts are not visible to it.
   draft: false
+  # The Registry reads terraform-registry-manifest.json to learn which plugin
+  # protocol this provider speaks. WITHOUT it the Registry assumes protocol 5.0 —
+  # and terraform-plugin-framework serves 6.0, so every `terraform init` would fail
+  # with a protocol mismatch. It must be published alongside the archives under
+  # this exact name.
+  extra_files:
+    - glob: terraform-registry-manifest.json
+      name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
 
 changelog:
   disable: true
