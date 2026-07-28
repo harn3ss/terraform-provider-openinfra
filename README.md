@@ -136,10 +136,10 @@ Three resources — `application`, `database`, `virtual_machine` — are hand-wr
 because they carry behaviour a schema cannot express: per-engine connection-secret
 naming, start/stop semantics.
 
-The other twelve are **generated from a table**. Every open-infra CRD has the same
+The other thirteen are **generated from a table**. Every open-infra CRD has the same
 lifecycle — create a namespaced custom resource, read its status, replace its spec,
 delete it — so writing a resource per kind meant ~250 lines of identical CRUD each, and
-twelve separate places to drift from the XRD that actually defines the schema. Instead,
+thirteen separate places to drift from the XRD that actually defines the schema. Instead,
 [`internal/provider/kinds.go`](internal/provider/kinds.go) declares each kind as data
 and [`resource_generic.go`](internal/provider/resource_generic.go) turns it into a
 working resource. Adding a field is a line in a table.
@@ -179,10 +179,10 @@ sends the full desired spec.
 
 ### Not covered, on purpose
 
-- **`kind: User` / `kind: Group`** (`iam.openinfra.dev`). Identity is deliberately in a
-  separate API group in open-infra, and managing who may log in from the same config
-  that manages infrastructure invites an accident with no undo. Use the console or
-  `kubectl` for now.
+- **`kind: User` / `kind: Group` / `kind: Policy` / `kind: Role`** (`iam.openinfra.dev`).
+  Identity and access are deliberately in a separate API group in open-infra, and managing
+  who may log in — or what they may do — from the same config that manages infrastructure
+  invites an accident with no undo. Use the console or `kubectl` for now.
 - **Acceptance tests for `fault_injection` and `query`.** Applying a FaultInjection
   breaks running workloads on purpose and a Query launches a job; neither belongs in a
   suite someone might point at a cluster they care about. Their schemas are covered by
