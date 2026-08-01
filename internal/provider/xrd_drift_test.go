@@ -1,70 +1,171 @@
 package provider
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"sigs.k8s.io/yaml"
 )
 
-// TestKindsMatchXRDs is the cross-repo drift guard the kinds.go header calls for.
+// TestKindsMatchXRDs is the cross-repo drift guard the kinds.go header calls for, covering ALL
+// provider kinds uniformly — the 13 table-driven generic kinds AND the 3 bespoke resources.
 //
-// kinds.go is a HAND-MAINTAINED mirror of the open-infra XRDs. Until now nothing checked it
-// against the source of truth, so adding a spec field to an XRD and forgetting it here was a
-// SILENT failure: no error, the field simply couldn't be set in HCL. This parses the XRDs and
-// asserts every `spec` leaf field is expressible through the generic-kinds table.
+// The provider mirrors open-infra's XRDs by hand, and until now nothing checked it: a spec field
+// added to an XRD and forgotten here is a SILENT failure — no error, the field just can't be set
+// in HCL. This parses the actual XRDs and asserts every `spec` field is expressible.
 //
-// The XRDs are found via, in order: $OPENINFRA_XRD_DIR, then a sibling `../../../open-infra`
-// checkout. If neither exists the test SKIPS locally (a contributor without the sibling repo
-// isn't blocked) but FAILS under CI — CI must provide the XRDs, or the guard is silently off.
+// Two granularities, matching how each kind is authored:
+//   - Generic kinds mirror the WHOLE XRD via the kinds.go attr table, so they are checked at
+//     LEAF granularity (nested objects recurse; e.g. `target.labelSelector`).
+//   - Bespoke resources (Database, VirtualMachine, Application) hand-write a FLAT, curated schema,
+//     so they are checked at TOP-LEVEL granularity — every top-level XRD spec field must be
+//     exposed or listed in `omitted`. That still catches the thing that matters: a NEW top-level
+//     field added upstream and forgotten. What a bespoke resource does NOT yet expose is recorded
+//     honestly in `omitted` (a current gap / potential enhancement), not silently absent.
 //
-// Scope: the 13 generic kinds in genericKinds. The three bespoke resources (Database,
-// VirtualMachine, Application) hand-write their schemas in resource_*.go and are out of scope
-// here — extending the guard to them via framework-schema introspection is a tracked follow-up.
+// XRDs come from $OPENINFRA_XRD_DIR or a sibling ../../../open-infra checkout; the test SKIPS
+// locally when neither exists but FAILS under CI, so the guard can never silently no-op.
 func TestKindsMatchXRDs(t *testing.T) {
 	dir := xrdDir(t)
+	docs := loadXRDDocs(t, dir)
 
-	// XRD spec fields the provider INTENTIONALLY does not expose in HCL. Key: "Kind.dotted.path".
-	// Every entry is a field a user cannot set through Terraform — keep it short and justified.
+	// Fields a kind's provider representation INTENTIONALLY does not expose in HCL, each with a
+	// reason. Generic keys are "Kind.dotted.leaf.path"; bespoke keys are "<type_name>.field".
+	// Every entry is a field a user cannot set through Terraform — keep them justified.
 	omitted := map[string]bool{
-		// Replication.scheduling is an operational pod-placement knob whose stated purpose is
-		// the chaos suite (pin the disposable sandbox mesh onto tainted chaos nodes); it's set
-		// via the platform/GitOps, not typical Terraform-managed replication. Its `tolerations`
-		// is a free-form preserve-unknown list the typed provider can't cleanly express anyway.
-		// Omitted deliberately — now visible and asserted here rather than a silent absence.
+		// --- generic ---
+		// Replication.scheduling is an operational pod-placement knob (its stated purpose is the
+		// chaos suite: pin the sandbox mesh onto tainted chaos nodes); set via the platform/GitOps,
+		// and its `tolerations` is a preserve-unknown free-form list the typed provider can't model.
 		"Replication.scheduling.nodeSelector": true,
 		"Replication.scheduling.tolerations":  true,
+
+		// --- bespoke: virtual_machine (flat curated VM resource) ---
+		// Not currently exposed by the flat resource; potential enhancements, tracked here so a
+		// genuinely NEW VM spec field still fails the guard rather than slipping in silently.
+		"virtual_machine.existingRootClaim": true, // advanced restore path (adopt an existing root disk)
+		"virtual_machine.expose":            true,
+		"virtual_machine.ports":             true, // list; flat resource exposes no port list
+		"virtual_machine.securityGroups":    true, // list; SG attach not yet in HCL
+		"virtual_machine.sshKey":            true,
+
+		// --- bespoke: application (flat curated app resource) ---
+		"application.database":       true, // a data-only Application is the `openinfra_database` resource
+		"application.domain":         true,
+		"application.env":            true,
+		"application.queues":         true,
+		"application.scaling":        true,
+		"application.secrets":        true,
+		"application.securityGroups": true,
+		"application.storage":        true,
+
+		// --- bespoke: database (maps to Application spec.database) ---
+		"database.name":   true, // exposed as `database_name` (metadata name is the Application name)
+		"database.vector": true, // pgvector toggle not yet in HCL
 	}
 
-	byKind := loadXRDSpecFields(t, dir)
-
 	var problems []string
+
+	// --- Generic kinds: leaf-granularity completeness against the attr table. ---
 	for _, k := range genericKinds {
-		want, ok := byKind[k.Kind]
+		doc, ok := docs[k.Kind]
 		if !ok {
 			problems = append(problems, k.Kind+": no XRD found in "+dir+
 				" (kind is in genericKinds but has no matching *xrd*.yaml — renamed or removed upstream?)")
 			continue
 		}
+		want := map[string]bool{}
+		collectLeaves("", xrdSpecProperties(doc), want)
 		have := providerSpecPaths(k)
 		for _, p := range sortedSet(want) {
-			if omitted[k.Kind+"."+p] {
+			if omitted[k.Kind+"."+p] || have[p] {
 				continue
 			}
-			if !have[p] {
-				problems = append(problems, k.Kind+": XRD spec field `"+p+
-					"` is not mirrored in kinds.go (add the attr, or add \""+k.Kind+"."+p+"\" to `omitted` if deliberate)")
-			}
+			problems = append(problems, k.Kind+": XRD spec field `"+p+
+				"` is not mirrored in kinds.go (add the attr, or add \""+k.Kind+"."+p+"\" to `omitted` if deliberate)")
 		}
 	}
+
+	// --- Bespoke resources: top-level completeness against the hand-written framework schema. ---
+	for _, b := range bespokeResources() {
+		doc, ok := docs[b.kind]
+		if !ok {
+			problems = append(problems, b.typeName+": no XRD found for kind "+b.kind+" in "+dir)
+			continue
+		}
+		props := xrdSpecProperties(doc)
+		for _, seg := range b.specRoot { // descend to e.g. spec.database
+			sub, _ := props[seg].(map[string]any)
+			if sub == nil {
+				problems = append(problems, b.typeName+": XRD "+b.kind+" has no spec."+strings.Join(b.specRoot, ".")+" object")
+				props = nil
+				break
+			}
+			props, _ = sub["properties"].(map[string]any)
+		}
+		have := bespokeTopFields(b.r)
+		for _, f := range sortedSet(topKeys(props)) {
+			if omitted[b.typeName+"."+f] || have[f] {
+				continue
+			}
+			problems = append(problems, b.typeName+" ("+b.kind+"): XRD spec field `"+f+
+				"` is not exposed by the bespoke resource (expose it, or add \""+b.typeName+"."+f+"\" to `omitted`)")
+		}
+	}
+
 	if len(problems) > 0 {
 		sort.Strings(problems)
-		t.Fatalf("kinds.go has drifted from the open-infra XRDs — %d field(s):\n  %s",
+		t.Fatalf("provider has drifted from the open-infra XRDs — %d field(s):\n  %s",
 			len(problems), strings.Join(problems, "\n  "))
 	}
+}
+
+// bespoke describes one hand-written resource and where its schema maps in the XRDs.
+type bespoke struct {
+	typeName string
+	kind     string
+	specRoot []string // path under spec to compare against ([] = spec itself)
+	r        resource.Resource
+}
+
+func bespokeResources() []bespoke {
+	return []bespoke{
+		{"virtual_machine", "VirtualMachine", nil, NewVirtualMachineResource()},
+		{"application", "Application", nil, NewApplicationResource()},
+		// A data-only Application: its schema maps to Application spec.database.
+		{"database", "Application", []string{"database"}, NewDatabaseResource()},
+	}
+}
+
+// bespokeTopFields returns the camelCased spec keys a bespoke resource exposes, excluding the
+// metadata/computed attributes every resource adds (name/namespace/id/ready) so they can't
+// falsely satisfy a same-named spec field (e.g. metadata `name` vs spec.database `name`).
+func bespokeTopFields(r resource.Resource) map[string]bool {
+	var sr resource.SchemaResponse
+	r.Schema(context.Background(), resource.SchemaRequest{}, &sr)
+	reserved := map[string]bool{"name": true, "namespace": true, "id": true, "ready": true}
+	out := map[string]bool{}
+	for name := range sr.Schema.Attributes {
+		if reserved[name] {
+			continue
+		}
+		out[camel(name)] = true
+	}
+	return out
+}
+
+// topKeys returns the immediate keys of an openAPIV3Schema `properties` map.
+func topKeys(props map[string]any) map[string]bool {
+	out := map[string]bool{}
+	for k := range props {
+		out[k] = true
+	}
+	return out
 }
 
 // xrdDir resolves where the open-infra XRDs live (see the test doc for the search order).
@@ -85,16 +186,14 @@ func xrdDir(t *testing.T) string {
 	return ""
 }
 
-// loadXRDSpecFields parses every XRD in dir and returns, per Kind, the set of dotted `spec`
-// LEAF field paths (e.g. "target.labelSelector"). Objects with sub-properties recurse to their
-// leaves; maps, preserve-unknown blocks and scalar arrays are leaves themselves.
-func loadXRDSpecFields(t *testing.T, dir string) map[string]map[string]bool {
+// loadXRDDocs parses every XRD in dir and indexes the parsed document by its (claim) Kind.
+func loadXRDDocs(t *testing.T, dir string) map[string]map[string]any {
 	t.Helper()
 	paths, err := filepath.Glob(filepath.Join(dir, "*xrd*.yaml"))
 	if err != nil || len(paths) == 0 {
 		t.Fatalf("no XRDs matched %s/*xrd*.yaml: %v", dir, err)
 	}
-	out := map[string]map[string]bool{}
+	out := map[string]map[string]any{}
 	for _, p := range paths {
 		b, err := os.ReadFile(p)
 		if err != nil {
@@ -104,13 +203,9 @@ func loadXRDSpecFields(t *testing.T, dir string) map[string]map[string]bool {
 		if err := yaml.Unmarshal(b, &doc); err != nil {
 			t.Fatalf("parse %s: %v", p, err)
 		}
-		kind := xrdKind(doc)
-		if kind == "" {
-			continue
+		if kind := xrdKind(doc); kind != "" {
+			out[kind] = doc
 		}
-		fields := map[string]bool{}
-		collectLeaves("", xrdSpecProperties(doc), fields)
-		out[kind] = fields
 	}
 	return out
 }
@@ -167,28 +262,28 @@ func collectLeaves(prefix string, props map[string]any, out map[string]bool) {
 		typ, _ := s["type"].(string)
 		if typ == "object" {
 			if sub, _ := s["properties"].(map[string]any); len(sub) > 0 {
-				collectLeaves(path, sub, out) // nested object → recurse to its leaves
+				collectLeaves(path, sub, out)
 				continue
 			}
-			out[path] = true // map / preserve-unknown → leaf
+			out[path] = true
 			continue
 		}
 		if typ == "array" {
 			if items, _ := s["items"].(map[string]any); items != nil {
 				if sub, _ := items["properties"].(map[string]any); len(sub) > 0 {
-					collectLeaves(path, sub, out) // list-of-objects → recurse to item leaves
+					collectLeaves(path, sub, out)
 					continue
 				}
 			}
-			out[path] = true // scalar array → leaf
+			out[path] = true
 			continue
 		}
-		out[path] = true // scalar → leaf
+		out[path] = true
 	}
 }
 
 // providerSpecPaths returns the set of dotted `spec` leaf paths the kinds.go table covers for
-// one kind — the mirror of collectLeaves, walking the attr tree instead of the XRD.
+// one generic kind — the mirror of collectLeaves, walking the attr tree instead of the XRD.
 func providerSpecPaths(k kindSpec) map[string]bool {
 	out := map[string]bool{}
 	var walk func(prefix []string, attrs []attr)

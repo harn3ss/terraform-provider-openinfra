@@ -118,8 +118,10 @@ reading what's already there.
 > the generic-kinds table. CI checks out open-infra to supply the XRDs; deliberate omissions
 > are listed (and justified) in the test's `omitted` allowlist. Locally the guard runs when
 > open-infra is a sibling checkout or `$OPENINFRA_XRD_DIR` is set, and skips otherwise.
-> *(The three bespoke resources — Database, VirtualMachine, Application — hand-write their
-> schemas and are out of the guard's scope for now.)*
+> *All 16 kinds are covered: the 13 table-driven kinds at leaf granularity, and the three
+> bespoke resources (Database, VirtualMachine, Application) at top-level granularity — since
+> those hand-write a flat, curated schema, every top-level XRD field must be exposed or listed
+> in `omitted`, so a NEW upstream field still fails the build.*
 
 Most changes are one line in [`internal/provider/kinds.go`](internal/provider/kinds.go).
 [CONTRIBUTING.md](CONTRIBUTING.md#adding-or-changing-a-resource) has the mapping table and
