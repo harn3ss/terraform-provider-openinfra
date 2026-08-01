@@ -16,6 +16,15 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      # Source of truth for the kinds.go <-> XRD drift guard (TestKindsMatchXRDs). open-infra
+      # is public, so no token is needed. Without this the guard would FAIL under CI (it refuses
+      # to silently skip when CI=true) — checking it out here is what lets the guard actually run.
+      - name: Check out open-infra (XRD source of truth)
+        uses: actions/checkout@v4
+        with:
+          repository: harn3ss/open-infra
+          path: _openinfra
+
       - name: go vet
         run: go vet ./...
 
@@ -30,6 +39,10 @@ jobs:
         run: go build ./...
 
       - name: test
+        env:
+          # Point the drift guard at the sibling open-infra checkout so it RUNS here rather than
+          # skips. The env var takes precedence over the local-sibling fallback used in dev.
+          OPENINFRA_XRD_DIR: ${{ github.workspace }}/_openinfra/platform/abstraction
         run: go test ./...
 
       # The docs/ tree is generated from the provider schema. If it is regenerated

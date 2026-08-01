@@ -111,8 +111,15 @@ reading what's already there.
 
 ## Keeping in sync with open-infra
 
-> ⚠️ **This repository mirrors open-infra's CRD schemas by hand, and nothing enforces it.**
-> A field missing here cannot be expressed in HCL — silently absent, not an error.
+> **This repository mirrors open-infra's CRD schemas by hand — but a CI drift guard now
+> enforces it.** A field missing here cannot be expressed in HCL (silently absent, not an
+> error), so `TestKindsMatchXRDs` ([`internal/provider/xrd_drift_test.go`](internal/provider/xrd_drift_test.go))
+> parses the actual open-infra XRDs and fails the build when a `spec` field isn't mirrored in
+> the generic-kinds table. CI checks out open-infra to supply the XRDs; deliberate omissions
+> are listed (and justified) in the test's `omitted` allowlist. Locally the guard runs when
+> open-infra is a sibling checkout or `$OPENINFRA_XRD_DIR` is set, and skips otherwise.
+> *(The three bespoke resources — Database, VirtualMachine, Application — hand-write their
+> schemas and are out of the guard's scope for now.)*
 
 Most changes are one line in [`internal/provider/kinds.go`](internal/provider/kinds.go).
 [CONTRIBUTING.md](CONTRIBUTING.md#adding-or-changing-a-resource) has the mapping table and
