@@ -12,9 +12,9 @@ import (
 
 // The kindSpec table is hand-maintained, so these tests exist to catch the mistakes a
 // table invites: a duplicated name, a nested block with no fields, a default whose Go
-// type doesn't match the attribute's. None of them can see the XRDs — drift against
-// open-infra is a cross-repo problem the README calls out, not something a unit test
-// can detect.
+// type doesn't match the attribute's. Drift AGAINST the open-infra XRDs — the cross-repo
+// case — is caught separately by xrd_drift_test.go (TestKindsMatchXRDs), which parses the
+// actual XRDs; these in-package tests only check the table's own internal consistency.
 
 // TestGenericKindsWellFormed is the table's own consistency check.
 func TestGenericKindsWellFormed(t *testing.T) {

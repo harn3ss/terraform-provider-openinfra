@@ -23,7 +23,9 @@ import (
 //
 // KEEP IN SYNC with platform/abstraction/*-xrd.yaml in the open-infra repo. A field
 // missing here is simply not expressible in HCL — there is no error, just an absence.
-// kinds_test.go asserts the table's internal consistency; it cannot see the XRDs.
+// This is no longer only a convention: xrd_drift_test.go (TestKindsMatchXRDs) parses the
+// actual XRDs and fails CI when a spec field isn't mirrored here (deliberate omissions go in
+// its `omitted` allowlist). kinds_test.go still checks the table's own internal consistency.
 
 type attrType int
 
