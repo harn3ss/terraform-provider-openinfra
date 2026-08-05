@@ -370,6 +370,28 @@ var genericKinds = []kindSpec{
 		},
 		Status: []statusAttr{{Name: "phase", Type: tString}},
 	},
+	{
+		TypeName: "http_api", Kind: "HttpApi", Plural: "httpapis",
+		Description: "An API-Gateway-style HTTP front door: a hostname with path routes onto " +
+			"`openinfra_function` or `openinfra_application` backends. Compiles to a Traefik Ingress " +
+			"with cert-manager TLS.",
+		Attrs: []attr{
+			{Name: "domain", Type: tString, Required: true,
+				Description: "Hostname the API is served on, e.g. `api.example.com`."},
+			{Name: "tls", Type: tBool, Default: true,
+				Description: "Terminate TLS via cert-manager. Set false for plain HTTP."},
+			{Name: "routes", Type: tObjectList, Required: true, Nested: []attr{
+				{Name: "path", Type: tString, Required: true, Description: "URL path to match, e.g. `/` or `/users`."},
+				{Name: "path_type", Type: tString, Description: "`Prefix` (default), `Exact`, or `ImplementationSpecific`."},
+				{Name: "backend", Type: tObject, Nested: []attr{
+					{Name: "kind", Type: tString, Description: "`Function` (default) or `Application`."},
+					{Name: "name", Type: tString, Required: true, Description: "Name of the backing Function/Application (same namespace)."},
+					{Name: "port", Type: tInt, Description: "Backend Service port. Defaults to `80`."},
+				}},
+			}},
+		},
+		Status: []statusAttr{{Name: "url", Type: tString, Description: "The public URL of the API."}},
+	},
 }
 
 // connDBFields is the database-connection half of a DataFlow node. Separate from
