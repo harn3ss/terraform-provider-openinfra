@@ -423,10 +423,10 @@ var genericKinds = []kindSpec{
 			{Name: "resolvers", Type: tObjectList, Required: true, Nested: []attr{
 				{Name: "type", Type: tString, Required: true, Description: "`Query` or `Mutation`."},
 				{Name: "field", Type: tString, Required: true, Description: "The GraphQL field name, e.g. `getTodo`."},
-				{Name: "runtime", Type: tString, Description: "The resolver runtime. Defaults to `appsync-vtl`."},
+				{Name: "runtime", Type: tString, Description: "The resolver runtime: `appsync-vtl` (default) or `appsync-js` (a sandboxed JS module in `request`)."},
 				// Unit resolver:
 				{Name: "data_source", Type: tString, Description: "Unit resolver: name of a `data_sources` entry."},
-				{Name: "request", Type: tString, Description: "Unit resolver: request mapping template source."},
+				{Name: "request", Type: tString, Description: "Unit resolver: request mapping template (VTL), or the full JS module for `appsync-js`."},
 				{Name: "response", Type: tString, Description: "Unit resolver: response mapping template source."},
 				// Pipeline resolver:
 				{Name: "before", Type: tString, Description: "Pipeline: before mapping template (sets `$ctx.stash` / may abort; no data source)."},
