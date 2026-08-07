@@ -392,6 +392,39 @@ var genericKinds = []kindSpec{
 		},
 		Status: []statusAttr{{Name: "url", Type: tString, Description: "The public URL of the API."}},
 	},
+	{
+		TypeName: "graphql_api", Kind: "GraphQLApi", Plural: "graphqlapis",
+		Description: "A neutral GraphQL API served by the open-appsync engine: a schema plus data " +
+			"sources and resolvers, each resolver declaring a `runtime` (today `appsync-vtl`) and " +
+			"carrying its request/response mapping templates inline. A team's existing AppSync VTL runs " +
+			"byte-for-byte unchanged. Compiles to an engine Deployment + Service (EXPERIMENTAL).",
+		Attrs: []attr{
+			{Name: "schema", Type: tString,
+				Description: "Optional GraphQL SDL. The slice-1 executor derives fields from the resolver list."},
+			{Name: "image", Type: tString, Default: "ghcr.io/harn3ss/open-infra-open-appsync:latest",
+				Description: "The open-appsync engine image serving this API."},
+			{Name: "replicas", Type: tInt, Default: int64(1)},
+			{Name: "mongo_uri", Type: tString, Path: []string{"mongoURI"},
+				Description: "FerretDB (Mongo wire) endpoint backing `dynamodb` data sources. Required only " +
+					"if a data source is `dynamodb`; a `dynamodb` source with no `mongo_uri` fails closed at load."},
+			{Name: "mongo_db", Type: tString, Path: []string{"mongoDB"}, Default: "open_appsync",
+				Description: "FerretDB database name for `dynamodb` data sources."},
+			{Name: "data_sources", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true, Description: "Data source name a resolver references."},
+				{Name: "type", Type: tString, Description: "`memory` (default, ephemeral) or `dynamodb` (FerretDB-backed)."},
+				{Name: "collection", Type: tString, Description: "`dynamodb`: the FerretDB collection (the 'table')."},
+			}},
+			{Name: "resolvers", Type: tObjectList, Required: true, Nested: []attr{
+				{Name: "type", Type: tString, Required: true, Description: "`Query` or `Mutation`."},
+				{Name: "field", Type: tString, Required: true, Description: "The GraphQL field name, e.g. `getTodo`."},
+				{Name: "data_source", Type: tString, Required: true, Description: "Name of a `data_sources` entry."},
+				{Name: "runtime", Type: tString, Description: "The resolver runtime. Defaults to `appsync-vtl`."},
+				{Name: "request", Type: tString, Required: true, Description: "Request mapping template source (VTL for `appsync-vtl`)."},
+				{Name: "response", Type: tString, Required: true, Description: "Response mapping template source (VTL for `appsync-vtl`)."},
+			}},
+		},
+		Status: []statusAttr{{Name: "url", Type: tString, Description: "In-cluster GraphQL endpoint of the engine."}},
+	},
 }
 
 // connDBFields is the database-connection half of a DataFlow node. Separate from
