@@ -108,6 +108,7 @@ var crdKinds = []struct{ typeName, plural, kind string }{
 	{"fault_injection", "faultinjections", "FaultInjection"},
 	{"file_share", "fileshares", "FileShare"},
 	{"function", "functions", "Function"},
+	{"graphql_api", "graphqlapis", "GraphQLApi"},
 	{"http_api", "httpapis", "HttpApi"},
 	{"migration", "migrations", "Migration"},
 	{"model", "models", "Model"},
