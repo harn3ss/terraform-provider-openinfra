@@ -409,6 +409,12 @@ var genericKinds = []kindSpec{
 					"if a data source is `dynamodb`; a `dynamodb` source with no `mongo_uri` fails closed at load."},
 			{Name: "mongo_db", Type: tString, Path: []string{"mongoDB"}, Default: "open_appsync",
 				Description: "FerretDB database name for `dynamodb` data sources."},
+			{Name: "limits", Type: tObject, Description: "Hostile-load guards; ON by default even if omitted.", Nested: []attr{
+				{Name: "max_depth", Type: tInt, Description: "Reject queries nested past this (default 10; negative disables)."},
+				{Name: "max_cost", Type: tInt, Description: "Reject queries with more fields than this (default 1000; negative disables)."},
+				{Name: "persisted_only", Type: tBool, Description: "Only pre-registered documents in `persisted_queries` run."},
+				{Name: "persisted_queries", Type: tStringList, Description: "Allow-listed query documents (for `persisted_only`)."},
+			}},
 			{Name: "data_sources", Type: tObjectList, Nested: []attr{
 				{Name: "name", Type: tString, Required: true, Description: "Data source name a resolver references."},
 				{Name: "type", Type: tString, Description: "`memory` (default, ephemeral) or `dynamodb` (FerretDB-backed)."},
@@ -417,10 +423,20 @@ var genericKinds = []kindSpec{
 			{Name: "resolvers", Type: tObjectList, Required: true, Nested: []attr{
 				{Name: "type", Type: tString, Required: true, Description: "`Query` or `Mutation`."},
 				{Name: "field", Type: tString, Required: true, Description: "The GraphQL field name, e.g. `getTodo`."},
-				{Name: "data_source", Type: tString, Required: true, Description: "Name of a `data_sources` entry."},
 				{Name: "runtime", Type: tString, Description: "The resolver runtime. Defaults to `appsync-vtl`."},
-				{Name: "request", Type: tString, Required: true, Description: "Request mapping template source (VTL for `appsync-vtl`)."},
-				{Name: "response", Type: tString, Required: true, Description: "Response mapping template source (VTL for `appsync-vtl`)."},
+				// Unit resolver:
+				{Name: "data_source", Type: tString, Description: "Unit resolver: name of a `data_sources` entry."},
+				{Name: "request", Type: tString, Description: "Unit resolver: request mapping template source."},
+				{Name: "response", Type: tString, Description: "Unit resolver: response mapping template source."},
+				// Pipeline resolver:
+				{Name: "before", Type: tString, Description: "Pipeline: before mapping template (sets `$ctx.stash` / may abort; no data source)."},
+				{Name: "after", Type: tString, Description: "Pipeline: after mapping template (shapes the final value from `$ctx.prev.result`)."},
+				{Name: "functions", Type: tObjectList, Nested: []attr{
+					{Name: "data_source", Type: tString, Required: true, Description: "Name of a `data_sources` entry this function targets."},
+					{Name: "runtime", Type: tString, Description: "Defaults to `appsync-vtl`."},
+					{Name: "request", Type: tString, Required: true, Description: "The function's request mapping template."},
+					{Name: "response", Type: tString, Required: true, Description: "The function's response mapping template."},
+				}},
 			}},
 		},
 		Status: []statusAttr{{Name: "url", Type: tString, Description: "In-cluster GraphQL endpoint of the engine."}},
