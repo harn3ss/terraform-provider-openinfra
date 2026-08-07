@@ -429,6 +429,14 @@ var genericKinds = []kindSpec{
 				{Name: "data_source", Type: tString, Description: "Unit resolver: name of a `data_sources` entry."},
 				{Name: "request", Type: tString, Description: "Unit resolver: request mapping template (VTL), or the full JS module for `appsync-js`."},
 				{Name: "response", Type: tString, Description: "Unit resolver: response mapping template source."},
+				// Field-level authorization (checked via a k8s SubjectAccessReview — the shared boundary):
+				{Name: "auth", Type: tObject, Description: "The RBAC permission the caller must have to resolve this field. Omit for a public field.", Nested: []attr{
+					{Name: "group", Type: tString, Description: "API group, e.g. `openinfra.dev`."},
+					{Name: "resource", Type: tString, Description: "Resource plural, e.g. `graphqlapis`."},
+					{Name: "verb", Type: tString, Description: "e.g. `get`, `create`."},
+					{Name: "namespace", Type: tString, Description: "Namespace, or empty for cluster-scoped."},
+					{Name: "name", Type: tString, Description: "Optional specific object name."},
+				}},
 				// Pipeline resolver:
 				{Name: "before", Type: tString, Description: "Pipeline: before mapping template (sets `$ctx.stash` / may abort; no data source)."},
 				{Name: "after", Type: tString, Description: "Pipeline: after mapping template (shapes the final value from `$ctx.prev.result`)."},
