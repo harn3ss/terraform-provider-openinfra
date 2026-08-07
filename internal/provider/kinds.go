@@ -417,8 +417,9 @@ var genericKinds = []kindSpec{
 			}},
 			{Name: "data_sources", Type: tObjectList, Nested: []attr{
 				{Name: "name", Type: tString, Required: true, Description: "Data source name a resolver references."},
-				{Name: "type", Type: tString, Description: "`memory` (default, ephemeral) or `dynamodb` (FerretDB-backed)."},
+				{Name: "type", Type: tString, Description: "`memory` (default, ephemeral), `dynamodb` (FerretDB-backed), or `http`."},
 				{Name: "collection", Type: tString, Description: "`dynamodb`: the FerretDB collection (the 'table')."},
+				{Name: "endpoint", Type: tString, Description: "`http`: the base URL the resolver's operation targets."},
 			}},
 			{Name: "resolvers", Type: tObjectList, Required: true, Nested: []attr{
 				{Name: "type", Type: tString, Required: true, Description: "`Query` or `Mutation`."},
