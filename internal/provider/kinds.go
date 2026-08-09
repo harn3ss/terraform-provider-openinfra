@@ -400,13 +400,23 @@ var genericKinds = []kindSpec{
 			"byte-for-byte unchanged. Compiles to an engine Deployment + Service (EXPERIMENTAL).",
 		Attrs: []attr{
 			{Name: "schema", Type: tString,
-				Description: "Optional GraphQL SDL. The slice-1 executor derives fields from the resolver list."},
+				Description: "GraphQL SDL for the API. When set, the engine parses it into an in-memory type graph " +
+					"and answers `__schema`/`__type` introspection over it, so GraphQL tooling can build a client " +
+					"schema. Optional: the executor still resolves fields from the resolver list without it, but " +
+					"introspection is then unavailable."},
 			{Name: "image", Type: tString, Default: "ghcr.io/harn3ss/open-infra-open-appsync:latest",
 				Description: "The open-appsync engine image serving this API."},
 			{Name: "replicas", Type: tInt, Default: int64(1)},
 			{Name: "mongo_uri", Type: tString, Path: []string{"mongoURI"},
 				Description: "FerretDB (Mongo wire) endpoint backing `dynamodb` data sources. Required only " +
 					"if a data source is `dynamodb`; a `dynamodb` source with no `mongo_uri` fails closed at load."},
+			{Name: "api_keys_secret", Type: tString,
+				Description: "Name of a Secret (in this API's namespace) holding `apikeys.json` — a JSON array of " +
+					"`{key, username, groups}`. Enables `@aws_api_key` auth. THE KEY IS AN IDENTITY: presenting a key " +
+					"authenticates the request AS the mapped k8s identity (username/groups), whose SubjectAccessReview " +
+					"then authorizes `@aws_api_key` fields — the same one policy world as every other front door. Keep " +
+					"key material in this Secret, never in the spec. `@aws_iam`/`@aws_oidc`/`@aws_cognito_user_pools` " +
+					"are likewise enforced when their directives appear; `@aws_lambda` is advisory (reported, not enforced)."},
 			{Name: "mongo_db", Type: tString, Path: []string{"mongoDB"}, Default: "open_appsync",
 				Description: "FerretDB database name for `dynamodb` data sources."},
 			{Name: "limits", Type: tObject, Description: "Hostile-load guards; ON by default even if omitted.", Nested: []attr{
@@ -414,12 +424,24 @@ var genericKinds = []kindSpec{
 				{Name: "max_cost", Type: tInt, Description: "Reject queries with more fields than this (default 1000; negative disables)."},
 				{Name: "persisted_only", Type: tBool, Description: "Only pre-registered documents in `persisted_queries` run."},
 				{Name: "persisted_queries", Type: tStringList, Description: "Allow-listed query documents (for `persisted_only`)."},
+				{Name: "introspection", Type: tString,
+					Description: "Who may read the schema via `__schema`/`__type`: `enabled` (default, any client — " +
+						"best for tooling), `disabled` (never), or `authenticated-only` (off for anonymous callers). Requires `schema`."},
 			}},
 			{Name: "data_sources", Type: tObjectList, Nested: []attr{
 				{Name: "name", Type: tString, Required: true, Description: "Data source name a resolver references."},
-				{Name: "type", Type: tString, Description: "`memory` (default, ephemeral), `dynamodb` (FerretDB-backed), or `http`."},
+				{Name: "type", Type: tString, Description: "`memory` (default, ephemeral), `none` (no backend — " +
+					"resolved in the mapping templates, for pub/sub-only fields and local computation), `dynamodb` " +
+					"(FerretDB-backed), `http` (an HTTP endpoint), `lambda` (invoke a `kind: Function` over HTTP), " +
+					"`rds` (SQL over PostgreSQL/Aurora-PostgreSQL, DSN in `connection_secret`), `opensearch` (search " +
+					"against an OpenSearch domain), or `eventbridge` (publish events to the NATS event bus)."},
 				{Name: "collection", Type: tString, Description: "`dynamodb`: the FerretDB collection (the 'table')."},
-				{Name: "endpoint", Type: tString, Description: "`http`: the base URL the resolver's operation targets."},
+				{Name: "endpoint", Type: tString, Description: "`http`: the base URL the resolver's operation targets. " +
+					"`lambda`: the function (`kind: Function`) URL. `opensearch`: the domain endpoint. `eventbridge`: an " +
+					"optional NATS URL (defaults to the platform NATS bus)."},
+				{Name: "connection_secret", Type: tString, Description: "Name of a Secret (this API's namespace) holding " +
+					"this source's credentials, kept out of the spec. `rds`: a `dsn` key with the PostgreSQL connection " +
+					"string. `opensearch`: optional `username`/`password` keys for HTTP basic auth."},
 			}},
 			{Name: "resolvers", Type: tObjectList, Required: true, Nested: []attr{
 				{Name: "type", Type: tString, Required: true, Description: "`Query` or `Mutation`."},
