@@ -28,9 +28,12 @@ jobs:
       - name: go vet
         run: go vet ./...
 
+      # Scope gofmt to THIS repo's tracked Go files. `gofmt -l .` also sweeps the
+      # _openinfra/ checkout above (a foreign repo on its own gofmt cadence) and would
+      # fail on drift that isn't ours to fix.
       - name: gofmt (must be clean)
         run: |
-          unformatted="$(gofmt -l .)"
+          unformatted="$(gofmt -l $(git ls-files '*.go'))"
           if [ -n "$unformatted" ]; then
             echo "These files need gofmt:"; echo "$unformatted"; exit 1
           fi
