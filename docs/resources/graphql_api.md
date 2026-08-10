@@ -76,7 +76,7 @@ Optional:
 
 Optional:
 
-- `keys` (List of String) `$context` paths that, with the caller identity, form the cache key — e.g. `arguments.id`, `identity.sub`. Omit to cache arguments-agnostically (one entry per caller for the whole field).
+- `keys` (List of String) `$context` paths that, with the caller identity, form the cache key — e.g. `arguments.id`, `identity.sub`. Omit to fold ALL the field's arguments into the key (per-caller, per-argument-set), so distinct arguments never collide.
 - `ttl_seconds` (Number) How long a cached response lives, in seconds. 0 or unset disables caching for this resolver.
 
 
