@@ -52,6 +52,7 @@ Optional:
 - `after` (String) Pipeline: after mapping template (shapes the final value from `$ctx.prev.result`).
 - `auth` (Attributes) The RBAC permission the caller must have to resolve this field. Omit for a public field. (see [below for nested schema](#nestedatt--resolvers--auth))
 - `before` (String) Pipeline: before mapping template (sets `$ctx.stash` / may abort; no data source).
+- `caching` (Attributes) Per-resolver response caching. Ignored on `Mutation` resolvers (never cached). The caller identity is ALWAYS part of the cache key, so per-user data is never shared across callers even if `keys` omits it. In-memory (per replica) today; a shared multi-replica backend is a later rung. (see [below for nested schema](#nestedatt--resolvers--caching))
 - `data_source` (String) Unit resolver: name of a `data_sources` entry.
 - `functions` (Attributes List) (see [below for nested schema](#nestedatt--resolvers--functions))
 - `request` (String) Unit resolver: request mapping template (VTL), or the full JS module for `appsync-js`.
@@ -68,6 +69,15 @@ Optional:
 - `namespace` (String) Namespace, or empty for cluster-scoped.
 - `resource` (String) Resource plural, e.g. `graphqlapis`.
 - `verb` (String) e.g. `get`, `create`.
+
+
+<a id="nestedatt--resolvers--caching"></a>
+### Nested Schema for `resolvers.caching`
+
+Optional:
+
+- `keys` (List of String) `$context` paths that, with the caller identity, form the cache key — e.g. `arguments.id`, `identity.sub`. Omit to cache arguments-agnostically (one entry per caller for the whole field).
+- `ttl_seconds` (Number) How long a cached response lives, in seconds. 0 or unset disables caching for this resolver.
 
 
 <a id="nestedatt--resolvers--functions"></a>

@@ -468,6 +468,11 @@ var genericKinds = []kindSpec{
 					{Name: "request", Type: tString, Required: true, Description: "The function's request mapping template."},
 					{Name: "response", Type: tString, Required: true, Description: "The function's response mapping template."},
 				}},
+				// Per-resolver response caching (AppSync's caching behavior):
+				{Name: "caching", Type: tObject, Description: "Per-resolver response caching. Ignored on `Mutation` resolvers (never cached). The caller identity is ALWAYS part of the cache key, so per-user data is never shared across callers even if `keys` omits it. In-memory (per replica) today; a shared multi-replica backend is a later rung.", Nested: []attr{
+					{Name: "ttl_seconds", Type: tInt, Description: "How long a cached response lives, in seconds. 0 or unset disables caching for this resolver."},
+					{Name: "keys", Type: tStringList, Description: "`$context` paths that, with the caller identity, form the cache key — e.g. `arguments.id`, `identity.sub`. Omit to cache arguments-agnostically (one entry per caller for the whole field)."},
+				}},
 			}},
 			{Name: "subscriptions", Type: tObjectList, Description: "Subscription-type fields (experimental; served over graphql-transport-ws).", Nested: []attr{
 				{Name: "field", Type: tString, Required: true, Description: "The Subscription field name, e.g. `onCreateTodo`."},
