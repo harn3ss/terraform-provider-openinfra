@@ -74,6 +74,10 @@ var genericKinds = []kindSpec{
 			{Name: "port", Type: tInt, Default: int64(8080), Description: "Port the container listens on."},
 			{Name: "gpu", Type: tInt, Default: int64(0),
 				Description: "GPUs per instance, for serverless inference. `0` is CPU-only."},
+			{Name: "memory", Type: tString,
+				Description: "Guaranteed memory per instance as a Kubernetes quantity (e.g. `512Mi`, `1Gi`) — the AWS Lambda memory-size knob. Set as both request and limit; unset means the cluster default."},
+			{Name: "timeout", Type: tInt,
+				Description: "Max wall-clock seconds per request (Knative revision timeout) — the AWS Lambda timeout knob. Unset means the Knative default (300s)."},
 			{Name: "expose", Type: tBool, Default: true,
 				Description: "Reachable on the LAN via the Knative gateway. `false` keeps it cluster-local."},
 			{Name: "scaling", Type: tObject, Nested: []attr{

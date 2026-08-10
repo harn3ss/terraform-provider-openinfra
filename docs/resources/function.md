@@ -25,12 +25,14 @@ A serverless function — a container that scales to zero between requests. Comp
 - `env` (Attributes List) (see [below for nested schema](#nestedatt--env))
 - `expose` (Boolean) Reachable on the LAN via the Knative gateway. `false` keeps it cluster-local.
 - `gpu` (Number) GPUs per instance, for serverless inference. `0` is CPU-only.
+- `memory` (String) Guaranteed memory per instance as a Kubernetes quantity (e.g. `512Mi`, `1Gi`) — the AWS Lambda memory-size knob. Set as both request and limit; unset means the cluster default.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `port` (Number) Port the container listens on.
 - `queues` (List of String) Queues this function works with. Injects `NATS_URL` and `OPENINFRA_QUEUES`.
 - `scaling` (Attributes) (see [below for nested schema](#nestedatt--scaling))
 - `secrets` (List of String) Secrets to inject with `envFrom` — an app's database or bucket credentials, say.
 - `security_groups` (List of String) SecurityGroups to attach to this function's pods.
+- `timeout` (Number) Max wall-clock seconds per request (Knative revision timeout) — the AWS Lambda timeout knob. Unset means the Knative default (300s).
 - `trigger` (Attributes) Event-source mapping: deliver a Stream's change events to this function as HTTP POSTs. (see [below for nested schema](#nestedatt--trigger))
 
 ### Read-Only
