@@ -495,6 +495,35 @@ var genericKinds = []kindSpec{
 		},
 		Status: []statusAttr{{Name: "url", Type: tString, Description: "In-cluster GraphQL endpoint of the engine."}},
 	},
+
+	{
+		TypeName: "certificate_authority", Kind: "CertificateAuthority", Plural: "certificateauthorities",
+		Description: "A managed private certificate authority — the ACM-Private-CA-shaped primitive. " +
+			"Each CA is a Vault PKI mount that issues short-lived leaf certificates for names under the " +
+			"domains you allow; stand up a self-signed `root`, or an `intermediate` signed by one. Issue " +
+			"and revoke from the console (EXPERIMENTAL; requires the encryption component + Vault).",
+		Attrs: []attr{
+			{Name: "common_name", Type: tString, Required: true, Replaces: true,
+				Description: "The CA certificate's subject common name. Baked into the CA cert, so it replaces."},
+			{Name: "hierarchy", Type: tString, Default: "root", Replaces: true,
+				Description: "`root` (self-signed) or `intermediate` (signed by `parent`). Fixed at creation."},
+			{Name: "parent", Type: tString, Replaces: true,
+				Description: "Name of the parent `openinfra_certificate_authority`, required when `hierarchy = intermediate`."},
+			{Name: "key_type", Type: tString, Default: "rsa-4096", Replaces: true,
+				Description: "`rsa-2048`, `rsa-4096`, `ec-256` or `ec-384`. The CA key algorithm, fixed at creation."},
+			{Name: "max_ttl", Type: tString, Default: "8760h",
+				Description: "Ceiling on the CA cert's lifetime and on issued leaf TTLs, as a Go duration (e.g. `8760h`)."},
+			{Name: "allowed_domains", Type: tStringList,
+				Description: "Domains the CA's `issuer` role may issue for; subdomains are allowed."},
+		},
+		Status: []statusAttr{
+			{Name: "ready", Type: tBool, Description: "The Vault PKI mount is provisioned and the CA cert exists."},
+			{Name: "pki_mount", Type: tString, Description: "The Vault mount path, `pki-<name>`."},
+			{Name: "ca_cert_pem", Type: tString, Description: "The CA certificate, PEM. Distribute to trust stores."},
+			{Name: "serial", Type: tString, Description: "The CA certificate's serial number."},
+			{Name: "not_after", Type: tString, Description: "The CA certificate's expiry."},
+		},
+	},
 }
 
 // connDBFields is the database-connection half of a DataFlow node. Separate from
