@@ -517,7 +517,6 @@ var genericKinds = []kindSpec{
 				Description: "Domains the CA's `issuer` role may issue for; subdomains are allowed."},
 		},
 		Status: []statusAttr{
-			{Name: "ready", Type: tBool, Description: "The Vault PKI mount is provisioned and the CA cert exists."},
 			{Name: "pki_mount", Type: tString, Description: "The Vault mount path, `pki-<name>`."},
 			{Name: "ca_cert_pem", Type: tString, Description: "The CA certificate, PEM. Distribute to trust stores."},
 			{Name: "serial", Type: tString, Description: "The CA certificate's serial number."},
