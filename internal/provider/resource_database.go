@@ -34,6 +34,7 @@ type databaseModel struct {
 	HighAvailability types.Bool   `tfsdk:"high_availability"`
 	Expose           types.Bool   `tfsdk:"expose"`
 	Stopped          types.Bool   `tfsdk:"stopped"`
+	StorageClass     types.String `tfsdk:"storage_class"`
 	ID               types.String `tfsdk:"id"`
 	Ready            types.Bool   `tfsdk:"ready"`
 	ConnectionSecret types.String `tfsdk:"connection_secret"`
@@ -80,6 +81,12 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional:            true,
 				MarkdownDescription: "Stop the database (RDS-style): compute is scaled to zero, storage retained.",
 			},
+			"storage_class": schema.StringAttribute{
+				Optional: true,
+				MarkdownDescription: "StorageClass for the database's persistent volumes. When unset, the engine keeps its " +
+					"default (local-path; babelfish: longhorn). Set to your cluster's StorageClass on substrates without " +
+					"local-path, or to pin the database onto replicated storage (e.g. longhorn).",
+			},
 			"id": schema.StringAttribute{
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
@@ -124,6 +131,9 @@ func (m databaseModel) manifest() map[string]any {
 	}
 	if !m.Stopped.IsNull() {
 		db["stopped"] = m.Stopped.ValueBool()
+	}
+	if !m.StorageClass.IsNull() && m.StorageClass.ValueString() != "" {
+		db["storageClass"] = m.StorageClass.ValueString()
 	}
 	return map[string]any{
 		"apiVersion": client.Group + "/" + client.Version,
