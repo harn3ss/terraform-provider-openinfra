@@ -132,6 +132,7 @@ var genericKinds = []kindSpec{
 		TypeName: "file_share", Kind: "FileShare", Plural: "fileshares",
 		Description: "A shared filesystem exported over SMB — the EFS/FSx-shaped primitive.",
 		Attrs: []attr{
+			{Name: "storage_class", Type: tString, Description: "StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path)."},
 			{Name: "size", Type: tString, Required: true, Description: "Share capacity, e.g. `100Gi`."},
 			{Name: "expose", Type: tBool, Default: true,
 				Description: "Get a LAN IP on SMB 445 so machines can mount it."},
@@ -199,6 +200,7 @@ var genericKinds = []kindSpec{
 		Description: "A one-way database migration — the DMS-shaped primitive. Loads a source database " +
 			"into a target and optionally keeps it current with change data capture.",
 		Attrs: []attr{
+			{Name: "storage_class", Type: tString, Description: "StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path)."},
 			{Name: "mode", Type: tString, Default: "full-load-and-cdc",
 				Description: "`full-load`, `cdc`, or `full-load-and-cdc`."},
 			{Name: "source", Type: tObject, Required: true, Nested: connSpec(
@@ -247,6 +249,7 @@ var genericKinds = []kindSpec{
 			"joined by replication, migration, stream and pipe edges. This is what the console's " +
 			"canvas edits.",
 		Attrs: []attr{
+			{Name: "storage_class", Type: tString, Description: "StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path)."},
 			{Name: "nodes", Type: tObjectList, Required: true,
 				Description: "Endpoints on the canvas. `name` is the node id edges refer to, and doubles as " +
 					"the replication origin marker.",
@@ -294,6 +297,7 @@ var genericKinds = []kindSpec{
 		Description: "Change data capture from a database into NATS JetStream — the Kinesis-shaped " +
 			"primitive. Consume it from a `openinfra_function` with a `trigger`.",
 		Attrs: []attr{
+			{Name: "storage_class", Type: tString, Description: "StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path)."},
 			{Name: "source", Type: tObject, Required: true, Nested: connSpec(
 				attr{Name: "schemas", Type: tStringList, Description: "Defaults to `[\"public\"]`."},
 				attr{Name: "tables", Type: tStringList,
@@ -314,6 +318,7 @@ var genericKinds = []kindSpec{
 		Description: "A Samba Active Directory domain controller — the AWS Managed Microsoft AD-shaped " +
 			"primitive. Machines join it manually; see the open-infra docs.",
 		Attrs: []attr{
+			{Name: "storage_class", Type: tString, Description: "StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path)."},
 			{Name: "domain", Type: tString, Required: true, Replaces: true,
 				Description: "Domain FQDN, lowercase, e.g. `corp.example.lan`. The Kerberos realm and NetBIOS " +
 					"name are derived from it, so it cannot be changed in place."},
@@ -365,6 +370,7 @@ var genericKinds = []kindSpec{
 		Description: "A golden Windows disk image built from an evaluation ISO, for `openinfra_virtual_machine` " +
 			"to clone. Building one takes a long time and is not idempotent, so every field replaces.",
 		Attrs: []attr{
+			{Name: "storage_class", Type: tString, Description: "StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path)."},
 			{Name: "os", Type: tString, Required: true, Replaces: true,
 				Description: "`windows-server-2019`, `windows-server-2022` or `windows-server-2025`."},
 			{Name: "source_url", Type: tString, Replaces: true, Description: "Override the evaluation ISO URL."},
