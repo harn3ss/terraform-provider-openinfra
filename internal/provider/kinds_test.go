@@ -269,9 +269,16 @@ func TestManifestRoundTrip(t *testing.T) {
 		t.Fatalf("ssl = %v", got)
 	}
 
-	// And back, as Read would do it.
+	// And back, as Read would do it. Find the "source" attr by name rather than a fixed
+	// index — the attr order is not contractual (e.g. adding a top-level storage_class shifts it).
+	var srcAttr attr
+	for _, a := range stream.Attrs {
+		if a.Name == "source" {
+			srcAttr = a
+		}
+	}
 	spec := man["spec"].(map[string]any)
-	back := fromK8s(stream.Attrs[0], spec["source"])
+	back := fromK8s(srcAttr, spec["source"])
 	bm := back.(map[string]any)
 	if bm["password_secret_ref"].(map[string]any)["name"] != "orders-db-app" {
 		t.Fatalf("round trip lost passwordSecretRef: %#v", bm)
