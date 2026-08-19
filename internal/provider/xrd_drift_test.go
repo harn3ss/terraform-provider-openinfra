@@ -13,7 +13,7 @@ import (
 )
 
 // TestKindsMatchXRDs is the cross-repo drift guard the kinds.go header calls for, covering ALL
-// provider kinds uniformly — the 13 table-driven generic kinds AND the 3 bespoke resources.
+// provider kinds uniformly — the table-driven generic kinds AND the 3 bespoke resources.
 //
 // The provider mirrors open-infra's XRDs by hand, and until now nothing checked it: a spec field
 // added to an XRD and forgotten here is a SILENT failure — no error, the field just can't be set
@@ -118,9 +118,38 @@ func TestKindsMatchXRDs(t *testing.T) {
 		}
 	}
 
+	// --- New-kind drift: every XRD claim kind must have a provider resource OR a stated exclusion, so a
+	// brand-new upstream kind can't ship with no Terraform support and still pass CI (as the IAM/governance
+	// kinds below already do — intentionally console-managed, not Terraform-exposed). ---
+	excludedKinds := map[string]string{
+		"EncryptionKey":      "console/IAM-managed Vault Transit key; not Terraform-exposed",
+		"DataClassification": "console-managed data-categorization policy; not Terraform-exposed",
+		"Destruction":        "irreversible crypto-erase — a deliberate console/admin act, never Terraform-declared",
+		"User":               "identity object, managed in the console Security & Identity plane",
+		"Group":              "identity object, managed in the console Security & Identity plane",
+		"Policy":             "IAM policy, managed in the console Security & Identity plane",
+		"Role":               "IAM role, managed in the console Security & Identity plane",
+		"Grant":              "temporal JIT access grant, issued from the console, not Terraform",
+	}
+	known := map[string]bool{}
+	for _, k := range genericKinds {
+		known[k.Kind] = true
+	}
+	for _, b := range bespokeResources() {
+		known[b.kind] = true
+	}
+	for kind := range docs {
+		if known[kind] || excludedKinds[kind] != "" {
+			continue
+		}
+		problems = append(problems, kind+": XRD claim kind has no provider resource and is not in "+
+			"`excludedKinds` — add it to genericKinds/bespoke, or to excludedKinds with a reason "+
+			"(a new upstream kind must be consciously mirrored or excluded)")
+	}
+
 	if len(problems) > 0 {
 		sort.Strings(problems)
-		t.Fatalf("provider has drifted from the open-infra XRDs — %d field(s):\n  %s",
+		t.Fatalf("provider has drifted from the open-infra XRDs — %d finding(s):\n  %s",
 			len(problems), strings.Join(problems, "\n  "))
 	}
 }
