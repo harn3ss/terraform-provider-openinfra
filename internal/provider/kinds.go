@@ -314,6 +314,30 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "database_proxy", Kind: "DatabaseProxy", Plural: "databaseproxies",
+		Description: "A pooled, connection-bounded endpoint in front of a managed SQL-Server/Babelfish " +
+			"database — the RDS-Proxy-shaped primitive (`aws_db_proxy`). Terminates each client's TDS " +
+			"handshake, reuses backend connections across clean sessions, and caps how many the database " +
+			"ever sees so a client stampede queues instead of exhausting its connection slots.",
+		Attrs: []attr{
+			{Name: "target_database", Type: tString, Required: true,
+				Description: "Name of the managed database to pool in front of (its `database.name`). The " +
+					"proxy fronts that engine's TDS Service in the same namespace."},
+			{Name: "engine_family", Type: tString,
+				Description: "Wire family of the target: `babelfish` (default) or `sqlserver`."},
+			{Name: "pool_max", Type: tInt,
+				Description: "Max backend connections opened per credential key. Beyond this, clients queue — " +
+					"the connection ceiling. Defaults to `20`."},
+			{Name: "acquire_timeout_ms", Type: tInt,
+				Description: "How long a client waits for a backend at the cap before failing. Defaults to `10000`."},
+			{Name: "replicas", Type: tInt, Description: "Proxy Deployment replicas. Defaults to `1`."},
+		},
+		Status: []statusAttr{
+			{Name: "endpoint", Type: tString, Description: "The in-cluster TDS endpoint clients connect to."},
+		},
+	},
+
+	{
 		TypeName: "directory", Kind: "Directory", Plural: "directories",
 		Description: "A Samba Active Directory domain controller — the AWS Managed Microsoft AD-shaped " +
 			"primitive. Machines join it manually; see the open-infra docs.",

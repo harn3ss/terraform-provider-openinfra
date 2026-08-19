@@ -104,6 +104,7 @@ func (p *openinfraProvider) Resources(context.Context) []func() resource.Resourc
 var crdKinds = []struct{ typeName, plural, kind string }{
 	{"application", "applications", "Application"},
 	{"certificate_authority", "certificateauthorities", "CertificateAuthority"},
+	{"database_proxy", "databaseproxies", "DatabaseProxy"},
 	{"dataflow", "dataflows", "DataFlow"},
 	{"directory", "directories", "Directory"},
 	{"fault_injection", "faultinjections", "FaultInjection"},
