@@ -25,6 +25,7 @@ A Samba Active Directory domain controller — the AWS Managed Microsoft AD-shap
 - `expose` (Boolean) Get a LAN IP for DNS, Kerberos, LDAP and SMB so machines can join.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `size` (String) Storage for the directory database.
+- `storage_class` (String) StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path).
 
 ### Read-Only
 

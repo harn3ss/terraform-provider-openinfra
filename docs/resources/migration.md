@@ -25,6 +25,7 @@ A one-way database migration — the DMS-shaped primitive. Loads a source databa
 
 - `mode` (String) `full-load`, `cdc`, or `full-load-and-cdc`.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
+- `storage_class` (String) StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path).
 - `tables` (List of String) Bare table names to move. Empty means all tables.
 
 ### Read-Only

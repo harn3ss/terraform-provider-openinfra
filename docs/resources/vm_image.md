@@ -26,6 +26,7 @@ A golden Windows disk image built from an evaluation ISO, for `openinfra_virtual
 - `existing_golden_claim` (String) Adopt an existing PVC as the golden image, skipping the ISO build entirely.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `source_url` (String) Override the evaluation ISO URL.
+- `storage_class` (String) StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path).
 
 ### Read-Only
 

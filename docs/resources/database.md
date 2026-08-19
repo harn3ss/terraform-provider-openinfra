@@ -27,6 +27,7 @@ A managed database — a data-only `kind: Application`. Compiles to the engine's
 - `high_availability` (Boolean) Run a replicated/clustered topology where the engine supports it.
 - `namespace` (String)
 - `stopped` (Boolean) Stop the database (RDS-style): compute is scaled to zero, storage retained.
+- `storage_class` (String) StorageClass for the database's persistent volumes. When unset, the engine keeps its default (local-path; babelfish: longhorn). Set to your cluster's StorageClass on substrates without local-path, or to pin the database onto replicated storage (e.g. longhorn).
 
 ### Read-Only
 

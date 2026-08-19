@@ -25,6 +25,7 @@ A shared filesystem exported over SMB — the EFS/FSx-shaped primitive.
 - `expose` (Boolean) Get a LAN IP on SMB 445 so machines can mount it.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `node_ip` (String) Also answer SMB 445 on this node's LAN IP, for masquerade-networked VMs that cannot reach the MetalLB address.
+- `storage_class` (String) StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path).
 
 ### Read-Only
 

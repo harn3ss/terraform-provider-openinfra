@@ -26,6 +26,7 @@ A whole data topology in one resource: database, topic, function and bucket node
 - `auto_sync_tables` (Boolean) Multi-master only: keep the table *set* in sync across all members, adding a new table everywhere when it appears anywhere. Implies capturing all tables.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `origin_column` (String)
+- `storage_class` (String) StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path).
 - `tables` (List of String) Tables moved on every edge of this flow, e.g. `["public.orders"]`, or `["*"]` for all. Scope is per-flow; per-edge subsets are not supported.
 - `version_column` (String)
 
