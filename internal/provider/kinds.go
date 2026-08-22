@@ -331,6 +331,20 @@ var genericKinds = []kindSpec{
 			{Name: "acquire_timeout_ms", Type: tInt,
 				Description: "How long a client waits for a backend at the cap before failing. Defaults to `10000`."},
 			{Name: "replicas", Type: tInt, Description: "Proxy Deployment replicas. Defaults to `1`."},
+			{Name: "tls", Type: tObject,
+				Description: "Terminate client TLS at the proxy (`encrypt=on` / `strict`, the modes JDBC/ODBC/" +
+					".NET default to). Off unless `terminate` is set; the backend connection stays plaintext.",
+				Nested: []attr{
+					{Name: "terminate", Type: tBool, Description: "Enable TLS termination. Defaults to `false`."},
+					{Name: "issuer_ref", Type: tObject,
+						Description: "The cert-manager (Cluster)Issuer that signs the proxy's serving certificate.",
+						Nested: []attr{
+							{Name: "name", Type: tString, Required: true},
+							{Name: "kind", Type: tString, Description: "`ClusterIssuer` (default) or `Issuer`."},
+						}},
+					{Name: "dns_names", Type: tStringList,
+						Description: "Extra SANs for the serving cert; the proxy Service DNS names are always included."},
+				}},
 		},
 		Status: []statusAttr{
 			{Name: "endpoint", Type: tString, Description: "The in-cluster TDS endpoint clients connect to."},
