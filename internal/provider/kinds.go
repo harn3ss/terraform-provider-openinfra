@@ -125,6 +125,44 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "training_job", Kind: "TrainingJob", Plural: "trainingjobs",
+		Description: "A run-once, GPU-capable model-training job (SageMaker Training Jobs) — runs a " +
+			"training container to completion, reading a dataset and writing artifacts to the object store. " +
+			"The training counterpart to openinfra_model (inference).",
+		Attrs: []attr{
+			{Name: "image", Type: tString, Required: true,
+				Description: "Training container image. It runs to completion; write artifacts to the output bucket."},
+			{Name: "command", Type: tStringList, Description: "Optional entrypoint override (container command)."},
+			{Name: "args", Type: tStringList, Description: "Optional container args."},
+			{Name: "env", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true},
+				{Name: "value", Type: tString},
+			}, Description: "Environment variables — the place to pass hyperparameters and config."},
+			{Name: "gpu", Type: tInt, Default: int64(1),
+				Description: "GPUs to request. `0` runs CPU-only; >0 schedules on a GPU node."},
+			{Name: "gpu_tier", Type: tString, Default: "smallgpu",
+				Description: "GPU class when gpu>0. One of: `smallgpu` (A2000 class), `largegpu` (e.g. 3090)."},
+			{Name: "cpu", Type: tString, Description: "CPU request/limit as a Kubernetes quantity (e.g. `2`)."},
+			{Name: "memory", Type: tString, Description: "Memory request/limit as a Kubernetes quantity (e.g. `8Gi`)."},
+			{Name: "dataset", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Description: "Existing bucket holding the training data."},
+				{Name: "prefix", Type: tString, Description: "Optional key prefix."},
+			}, Description: "Input data location in the object store (injected as DATASET_BUCKET/DATASET_PREFIX + S3 creds)."},
+			{Name: "output", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Description: "Artifact bucket (created on demand)."},
+				{Name: "prefix", Type: tString, Description: "Optional key prefix."},
+			}, Description: "Where the job writes artifacts (injected as OUTPUT_BUCKET/OUTPUT_PREFIX + S3 creds)."},
+			{Name: "secrets", Type: tStringList, Description: "Extra secrets to inject with envFrom (e.g. a registry or HF token)."},
+			{Name: "backoff_limit", Type: tInt, Default: int64(0),
+				Description: "How many times the Job retries a failed pod before it is marked Failed."},
+			{Name: "max_runtime_seconds", Type: tInt,
+				Description: "Hard wall-clock cap (Job activeDeadlineSeconds). Unset means no cap."},
+		},
+		Status: []statusAttr{{Name: "job_name", Type: tString,
+			Description: "The batch Job the run executes as."}},
+	},
+
+	{
 		TypeName: "volume", Kind: "Volume", Plural: "volumes",
 		Description: "A block volume you can attach to a virtual machine — the EBS-shaped primitive. " +
 			"Backed by Longhorn.",
