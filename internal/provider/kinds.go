@@ -106,6 +106,25 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "state_machine", Kind: "StateMachine", Plural: "statemachines",
+		Description: "A workflow that orchestrates Functions in Amazon States Language (ASL) — " +
+			"open-infra's Step Functions. Run it by creating executions (from the console or kubectl, " +
+			"not Terraform, exactly as AWS starts executions from the API rather than Terraform).",
+		Attrs: []attr{
+			{Name: "definition", Type: tString, Required: true,
+				Description: "The workflow as an Amazon States Language (ASL) JSON document — the same " +
+					"string you would pass to `aws_sfn_state_machine.definition`. Use `jsonencode(...)` or a " +
+					"heredoc. Must have a top-level `StartAt` and `States`; Task states invoke a Function via " +
+					"`\"Resource\": \"function:<name>\"`."},
+			{Name: "type", Type: tString, Default: "Standard",
+				Description: "Workflow class. One of: `Standard`. Only Standard (durable, checkpointed) is " +
+					"implemented; Express is planned."},
+		},
+		Status: []statusAttr{{Name: "controller", Type: tString,
+			Description: "The controller running this state machine's executions."}},
+	},
+
+	{
 		TypeName: "volume", Kind: "Volume", Plural: "volumes",
 		Description: "A block volume you can attach to a virtual machine — the EBS-shaped primitive. " +
 			"Backed by Longhorn.",
@@ -288,6 +307,9 @@ var genericKinds = []kindSpec{
 			{Name: "auto_sync_tables", Type: tBool, Default: false,
 				Description: "Multi-master only: keep the table *set* in sync across all members, adding a new " +
 					"table everywhere when it appears anywhere. Implies capturing all tables."},
+			{Name: "drift_detection", Type: tBool, Default: false,
+				Description: "Multi-master only: run an always-on schema-drift detector that logs when members' " +
+					"table schemas diverge. Detection only — it never mutates schemas."},
 		},
 		Status: []statusAttr{{Name: "phase", Type: tString}},
 	},
