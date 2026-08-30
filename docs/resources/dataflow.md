@@ -24,6 +24,7 @@ A whole data topology in one resource: database, topic, function and bucket node
 ### Optional
 
 - `auto_sync_tables` (Boolean) Multi-master only: keep the table *set* in sync across all members, adding a new table everywhere when it appears anywhere. Implies capturing all tables.
+- `drift_detection` (Boolean) Multi-master only: run an always-on schema-drift detector that logs when members' table schemas diverge. Detection only — it never mutates schemas.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `origin_column` (String)
 - `storage_class` (String) StorageClass for this resource's persistent volumes. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn (e.g. RKE2 with local-path).

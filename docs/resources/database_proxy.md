@@ -27,9 +27,30 @@ A pooled, connection-bounded endpoint in front of a managed SQL-Server/Babelfish
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `pool_max` (Number) Max backend connections opened per credential key. Beyond this, clients queue — the connection ceiling. Defaults to `20`.
 - `replicas` (Number) Proxy Deployment replicas. Defaults to `1`.
+- `tls` (Attributes) Terminate client TLS at the proxy (`encrypt=on` / `strict`, the modes JDBC/ODBC/.NET default to). Off unless `terminate` is set; the backend connection stays plaintext. (see [below for nested schema](#nestedatt--tls))
 
 ### Read-Only
 
 - `endpoint` (String) The in-cluster TDS endpoint clients connect to.
 - `id` (String) `namespace/name`, the import identifier.
 - `ready` (Boolean) Whether the resource's Ready condition is True. Terraform returns as soon as the object is accepted, so this is usually `false` immediately after apply — the platform reconciles asynchronously.
+
+<a id="nestedatt--tls"></a>
+### Nested Schema for `tls`
+
+Optional:
+
+- `dns_names` (List of String) Extra SANs for the serving cert; the proxy Service DNS names are always included.
+- `issuer_ref` (Attributes) The cert-manager (Cluster)Issuer that signs the proxy's serving certificate. (see [below for nested schema](#nestedatt--tls--issuer_ref))
+- `terminate` (Boolean) Enable TLS termination. Defaults to `false`.
+
+<a id="nestedatt--tls--issuer_ref"></a>
+### Nested Schema for `tls.issuer_ref`
+
+Required:
+
+- `name` (String)
+
+Optional:
+
+- `kind` (String) `ClusterIssuer` (default) or `Issuer`.
