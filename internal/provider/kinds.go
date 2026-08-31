@@ -205,6 +205,25 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "feature_group", Kind: "FeatureGroup", Plural: "featuregroups",
+		Description: "An online feature store for real-time inference (SageMaker Feature Store) — a " +
+			"per-group Valkey + an API service serving PutRecord/GetRecord for millisecond feature lookups.",
+		Attrs: []attr{
+			{Name: "record_identifier", Type: tString, Required: true,
+				Description: "The feature that uniquely identifies a record (the primary key), e.g. `customer_id`."},
+			{Name: "event_time", Type: tString,
+				Description: "The feature carrying the record's event time; the latest write wins."},
+			{Name: "features", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true},
+				{Name: "type", Type: tString, Description: "Value type. One of: `string`, `integral`, `fractional`."},
+			}, Description: "The feature schema (advisory — the online store is schemaless key/value)."},
+			{Name: "ttl_seconds", Type: tInt,
+				Description: "Optional per-record TTL in the online store (seconds since last write). Unset = no expiry."},
+		},
+		Status: []statusAttr{{Name: "endpoint", Type: tString, Description: "The feature-store API URL (PutRecord/GetRecord)."}},
+	},
+
+	{
 		TypeName: "model_monitor", Kind: "ModelMonitor", Plural: "modelmonitors",
 		Description: "Scheduled data-drift monitoring for a deployed model (SageMaker Model Monitor) — a " +
 			"CronJob that compares recent data to a baseline, computes per-feature drift, and reports " +
