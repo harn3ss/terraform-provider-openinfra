@@ -163,6 +163,48 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "batch_transform", Kind: "BatchTransform", Plural: "batchtransforms",
+		Description: "A run-once, offline batch-inference job (SageMaker Batch Transform) — loads a model, " +
+			"scores an input dataset, and writes predictions to the object store, then exits. The offline " +
+			"counterpart to openinfra_model (a live endpoint).",
+		Attrs: []attr{
+			{Name: "image", Type: tString, Required: true,
+				Description: "Inference container image. Reads the input records, optionally loads a model artifact, and writes predictions."},
+			{Name: "command", Type: tStringList, Description: "Optional entrypoint override."},
+			{Name: "args", Type: tStringList, Description: "Optional container args."},
+			{Name: "artifact", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString},
+				{Name: "key", Type: tString, Description: "Object key of the model artifact."},
+			}, Description: "The model to score with (injected as ARTIFACT_BUCKET/ARTIFACT_KEY). Optional if baked into the image."},
+			{Name: "input", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "prefix", Type: tString, Description: "Key prefix of the input records."},
+			}, Description: "The dataset to score (injected as INPUT_BUCKET/INPUT_PREFIX)."},
+			{Name: "output", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "prefix", Type: tString, Description: "Key prefix for the predictions."},
+			}, Description: "Where predictions are written (injected as OUTPUT_BUCKET/OUTPUT_PREFIX; bucket created on demand)."},
+			{Name: "model_package", Type: tString, Description: "Provenance: the ModelPackage this job scores with."},
+			{Name: "gpu", Type: tInt, Default: int64(0), Description: "GPUs to request. `0` (default) runs CPU-only."},
+			{Name: "gpu_tier", Type: tString, Default: "smallgpu",
+				Description: "GPU class when gpu>0. One of: `smallgpu`, `largegpu`."},
+			{Name: "cpu", Type: tString, Description: "CPU request/limit."},
+			{Name: "memory", Type: tString, Description: "Memory request/limit."},
+			{Name: "env", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true},
+				{Name: "value", Type: tString},
+			}, Description: "Environment variables for the inference container."},
+			{Name: "secrets", Type: tStringList, Description: "Extra secrets to inject with envFrom."},
+			{Name: "backoff_limit", Type: tInt, Default: int64(0),
+				Description: "Pod retries before the job is marked Failed."},
+			{Name: "max_runtime_seconds", Type: tInt,
+				Description: "Hard wall-clock cap (Job activeDeadlineSeconds). Unset means no cap."},
+		},
+		Status: []statusAttr{{Name: "job_name", Type: tString,
+			Description: "The batch Job the run executes as."}},
+	},
+
+	{
 		TypeName: "volume", Kind: "Volume", Plural: "volumes",
 		Description: "A block volume you can attach to a virtual machine — the EBS-shaped primitive. " +
 			"Backed by Longhorn.",

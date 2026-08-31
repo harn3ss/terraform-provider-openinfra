@@ -103,6 +103,7 @@ func (p *openinfraProvider) Resources(context.Context) []func() resource.Resourc
 // from Terraform — there's no error, it's just missing.
 var crdKinds = []struct{ typeName, plural, kind string }{
 	{"application", "applications", "Application"},
+	{"batch_transform", "batchtransforms", "BatchTransform"},
 	{"certificate_authority", "certificateauthorities", "CertificateAuthority"},
 	{"database_proxy", "databaseproxies", "DatabaseProxy"},
 	{"dataflow", "dataflows", "DataFlow"},
