@@ -38,6 +38,10 @@ func TestKindsMatchXRDs(t *testing.T) {
 	// reason. Generic keys are "Kind.dotted.leaf.path"; bespoke keys are "<type_name>.field".
 	// Every entry is a field a user cannot set through Terraform — keep them justified.
 	omitted := map[string]bool{
+		// ModelMonitor.threshold is a float; the generic attr table has no float type yet.
+		// Use the default (0.2) or set it via the console/kubectl until a tFloat is added.
+		"ModelMonitor.threshold": true,
+
 		// --- generic ---
 		// Replication.scheduling is an operational pod-placement knob (its stated purpose is the
 		// chaos suite: pin the sandbox mesh onto tainted chaos nodes); set via the platform/GitOps,

@@ -205,6 +205,32 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "model_monitor", Kind: "ModelMonitor", Plural: "modelmonitors",
+		Description: "Scheduled data-drift monitoring for a deployed model (SageMaker Model Monitor) — a " +
+			"CronJob that compares recent data to a baseline, computes per-feature drift, and reports " +
+			"violations. `threshold` (a float) is set via the console or kubectl (default 0.2).",
+		Attrs: []attr{
+			{Name: "schedule", Type: tString, Default: "0 * * * *", Description: "Cron schedule (default hourly)."},
+			{Name: "baseline", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "key", Type: tString, Required: true, Description: "Object key of the baseline JSONL."},
+			}, Description: "The reference dataset drift is measured against."},
+			{Name: "current", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "prefix", Type: tString},
+			}, Description: "Where recent data/predictions to check live (JSONL under this prefix)."},
+			{Name: "output", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "prefix", Type: tString},
+			}, Description: "Where drift reports are written (bucket created on demand)."},
+			{Name: "features", Type: tStringList,
+				Description: "Numeric feature names to monitor. Empty = every numeric field in both datasets."},
+			{Name: "model_ref", Type: tString, Description: "The openinfra_model endpoint this monitors (informational)."},
+		},
+		Status: []statusAttr{{Name: "cron_job", Type: tString, Description: "The CronJob that runs the monitor."}},
+	},
+
+	{
 		TypeName: "processing_job", Kind: "ProcessingJob", Plural: "processingjobs",
 		Description: "A run-once, GPU-capable data-processing job (SageMaker Processing) — preprocessing, " +
 			"feature engineering, dataset validation, or model evaluation with N named inputs and outputs. " +
