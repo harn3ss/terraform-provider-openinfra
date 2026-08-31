@@ -205,6 +205,45 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "processing_job", Kind: "ProcessingJob", Plural: "processingjobs",
+		Description: "A run-once, GPU-capable data-processing job (SageMaker Processing) — preprocessing, " +
+			"feature engineering, dataset validation, or model evaluation with N named inputs and outputs. " +
+			"More general than openinfra_batch_transform (single-model inference).",
+		Attrs: []attr{
+			{Name: "image", Type: tString, Required: true,
+				Description: "Processing container. Reads its inputs, writes its outputs, and runs to completion."},
+			{Name: "command", Type: tStringList, Description: "Optional entrypoint override."},
+			{Name: "args", Type: tStringList, Description: "Optional container args."},
+			{Name: "inputs", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true},
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "prefix", Type: tString},
+			}, Description: "Named input channels (injected as INPUT_<NAME>_BUCKET/PREFIX + S3 creds)."},
+			{Name: "outputs", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true},
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "prefix", Type: tString},
+			}, Description: "Named output channels (injected as OUTPUT_<NAME>_BUCKET/PREFIX; buckets created on demand)."},
+			{Name: "gpu", Type: tInt, Default: int64(0), Description: "GPUs to request. `0` (default) runs CPU-only."},
+			{Name: "gpu_tier", Type: tString, Default: "smallgpu",
+				Description: "GPU class when gpu>0. One of: `smallgpu`, `largegpu`."},
+			{Name: "cpu", Type: tString, Description: "CPU request/limit."},
+			{Name: "memory", Type: tString, Description: "Memory request/limit."},
+			{Name: "env", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true},
+				{Name: "value", Type: tString},
+			}, Description: "Environment variables for the processing container."},
+			{Name: "secrets", Type: tStringList, Description: "Extra secrets to inject with envFrom."},
+			{Name: "backoff_limit", Type: tInt, Default: int64(0),
+				Description: "Pod retries before the job is marked Failed."},
+			{Name: "max_runtime_seconds", Type: tInt,
+				Description: "Hard wall-clock cap (Job activeDeadlineSeconds). Unset means no cap."},
+		},
+		Status: []statusAttr{{Name: "job_name", Type: tString,
+			Description: "The batch Job the run executes as."}},
+	},
+
+	{
 		TypeName: "volume", Kind: "Volume", Plural: "volumes",
 		Description: "A block volume you can attach to a virtual machine — the EBS-shaped primitive. " +
 			"Backed by Longhorn.",
