@@ -215,11 +215,33 @@ var genericKinds = []kindSpec{
 
 	{
 		TypeName: "model", Kind: "Model", Plural: "models",
-		Description: "A served language model with an OpenAI-compatible endpoint.",
+		Description: "A served language model with an OpenAI-compatible endpoint, or (with `serve`) " +
+			"a custom trained artifact served behind the same key-gated endpoint.",
 		Attrs: []attr{
-			{Name: "model", Type: tString, Required: true, Replaces: true,
+			{Name: "model", Type: tString, Replaces: true,
 				Description: "From the curated catalog: `qwen2.5:0.5b`, `llama3.2:1b`, `llama3.2:3b`, " +
-					"`llama3.1:8b`, `mixtral:8x7b`."},
+					"`llama3.1:8b`, `mixtral:8x7b`. Set this OR `serve`."},
+			{Name: "serve", Type: tObject, Description: "Serve a custom trained artifact instead of a " +
+				"catalog model (the train->serve path — typically promoting an openinfra_model_package). Set this OR `model`.",
+				Nested: []attr{
+					{Name: "image", Type: tString, Description: "Serving container image that loads the artifact and serves HTTP."},
+					{Name: "command", Type: tStringList, Description: "Optional entrypoint override."},
+					{Name: "args", Type: tStringList, Description: "Optional container args."},
+					{Name: "port", Type: tInt, Description: "Port the serving container listens on. Defaults to `8000` (not 8080, reserved for the proxy)."},
+					{Name: "artifact", Type: tObject, Nested: []attr{
+						{Name: "bucket", Type: tString},
+						{Name: "key", Type: tString, Description: "Object key of the artifact."},
+					}, Description: "The trained artifact in the object store (injected as ARTIFACT_BUCKET/ARTIFACT_KEY + S3 creds)."},
+					{Name: "gpu", Type: tInt, Description: "GPUs for serving. Defaults to `0` (CPU)."},
+					{Name: "gpu_tier", Type: tString, Description: "GPU class when gpu>0: `smallgpu` or `largegpu`. Defaults to `smallgpu`."},
+					{Name: "cpu", Type: tString, Description: "CPU request/limit."},
+					{Name: "memory", Type: tString, Description: "Memory request/limit."},
+					{Name: "model_package", Type: tString, Description: "Provenance: the ModelPackage this endpoint serves."},
+					{Name: "env", Type: tObjectList, Nested: []attr{
+						{Name: "name", Type: tString, Required: true},
+						{Name: "value", Type: tString},
+					}, Description: "Extra environment variables for the serving container."},
+				}},
 			{Name: "high_availability", Type: tBool, Default: false,
 				Description: "Two replicas on separate nodes."},
 			{Name: "domain", Type: tString, Description: "Hostname for an external Ingress and TLS certificate."},
@@ -228,6 +250,29 @@ var genericKinds = []kindSpec{
 			{Name: "expose", Type: tBool, Default: false, Description: "Get a LAN IP via MetalLB."},
 		},
 		Status: []statusAttr{{Name: "endpoint", Type: tString, Description: "The OpenAI-compatible base URL."}},
+	},
+
+	{
+		TypeName: "model_package", Kind: "ModelPackage", Plural: "modelpackages",
+		Description: "A versioned, approvable registry record of a trained model artifact (SageMaker " +
+			"Model Registry). Promote an Approved package to a served endpoint via openinfra_model's `serve`.",
+		Attrs: []attr{
+			{Name: "model_name", Type: tString, Required: true,
+				Description: "The model group/family this is a version of (group versions by this name)."},
+			{Name: "version", Type: tString, Description: "Version label within the group. Defaults to `1`."},
+			{Name: "artifact", Type: tObject, Nested: []attr{
+				{Name: "bucket", Type: tString, Required: true},
+				{Name: "key", Type: tString, Description: "Object key of the artifact."},
+			}, Description: "The trained model artifact in the object store."},
+			{Name: "image", Type: tString, Required: true,
+				Description: "The serving container image that loads this artifact — what `serve` uses to promote it."},
+			{Name: "port", Type: tInt, Description: "Serving port. Defaults to `8000`."},
+			{Name: "framework", Type: tString, Description: "Optional framework label (e.g. `pytorch`)."},
+			{Name: "metrics", Type: tString, Description: "Optional evaluation metrics as a JSON string."},
+			{Name: "description", Type: tString, Description: "Optional human description of this version."},
+			{Name: "approval_status", Type: tString,
+				Description: "Approval gate. One of `PendingManualApproval`, `Approved`, `Rejected`. Defaults to `PendingManualApproval`."},
+		},
 	},
 
 	{
