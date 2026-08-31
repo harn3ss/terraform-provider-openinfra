@@ -3,12 +3,12 @@
 page_title: "openinfra_model Resource - openinfra"
 subcategory: ""
 description: |-
-  A served language model with an OpenAI-compatible endpoint.
+  A served language model with an OpenAI-compatible endpoint, or (with serve) a custom trained artifact served behind the same key-gated endpoint.
 ---
 
 # openinfra_model (Resource)
 
-A served language model with an OpenAI-compatible endpoint.
+A served language model with an OpenAI-compatible endpoint, or (with `serve`) a custom trained artifact served behind the same key-gated endpoint.
 
 
 
@@ -17,7 +17,6 @@ A served language model with an OpenAI-compatible endpoint.
 
 ### Required
 
-- `model` (String) From the curated catalog: `qwen2.5:0.5b`, `llama3.2:1b`, `llama3.2:3b`, `llama3.1:8b`, `mixtral:8x7b`.
 - `name` (String) Resource name. Changing it replaces the resource.
 
 ### Optional
@@ -25,7 +24,9 @@ A served language model with an OpenAI-compatible endpoint.
 - `domain` (String) Hostname for an external Ingress and TLS certificate.
 - `expose` (Boolean) Get a LAN IP via MetalLB.
 - `high_availability` (Boolean) Two replicas on separate nodes.
+- `model` (String) From the curated catalog: `qwen2.5:0.5b`, `llama3.2:1b`, `llama3.2:3b`, `llama3.1:8b`, `mixtral:8x7b`. Set this OR `serve`.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
+- `serve` (Attributes) Serve a custom trained artifact instead of a catalog model (the train->serve path — typically promoting an openinfra_model_package). Set this OR `model`. (see [below for nested schema](#nestedatt--serve))
 - `storage_size` (String) Weight-cache size limit.
 
 ### Read-Only
@@ -33,3 +34,40 @@ A served language model with an OpenAI-compatible endpoint.
 - `endpoint` (String) The OpenAI-compatible base URL.
 - `id` (String) `namespace/name`, the import identifier.
 - `ready` (Boolean) Whether the resource's Ready condition is True. Terraform returns as soon as the object is accepted, so this is usually `false` immediately after apply — the platform reconciles asynchronously.
+
+<a id="nestedatt--serve"></a>
+### Nested Schema for `serve`
+
+Optional:
+
+- `args` (List of String) Optional container args.
+- `artifact` (Attributes) The trained artifact in the object store (injected as ARTIFACT_BUCKET/ARTIFACT_KEY + S3 creds). (see [below for nested schema](#nestedatt--serve--artifact))
+- `command` (List of String) Optional entrypoint override.
+- `cpu` (String) CPU request/limit.
+- `env` (Attributes List) Extra environment variables for the serving container. (see [below for nested schema](#nestedatt--serve--env))
+- `gpu` (Number) GPUs for serving. Defaults to `0` (CPU).
+- `gpu_tier` (String) GPU class when gpu>0: `smallgpu` or `largegpu`. Defaults to `smallgpu`.
+- `image` (String) Serving container image that loads the artifact and serves HTTP.
+- `memory` (String) Memory request/limit.
+- `model_package` (String) Provenance: the ModelPackage this endpoint serves.
+- `port` (Number) Port the serving container listens on. Defaults to `8000` (not 8080, reserved for the proxy).
+
+<a id="nestedatt--serve--artifact"></a>
+### Nested Schema for `serve.artifact`
+
+Optional:
+
+- `bucket` (String)
+- `key` (String) Object key of the artifact.
+
+
+<a id="nestedatt--serve--env"></a>
+### Nested Schema for `serve.env`
+
+Required:
+
+- `name` (String)
+
+Optional:
+
+- `value` (String)
