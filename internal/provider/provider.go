@@ -116,6 +116,7 @@ var crdKinds = []struct{ typeName, plural, kind string }{
 	{"migration", "migrations", "Migration"},
 	{"model", "models", "Model"},
 	{"model_package", "modelpackages", "ModelPackage"},
+	{"processing_job", "processingjobs", "ProcessingJob"},
 	{"query", "queries", "Query"},
 	{"replication", "replications", "Replication"},
 	{"security_group", "securitygroups", "SecurityGroup"},
