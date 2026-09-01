@@ -629,6 +629,20 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "parameter", Kind: "Parameter", Plural: "parameters",
+		Description: "A hierarchical, optionally-encrypted parameter — the AWS SSM Parameter Store-shaped " +
+			"primitive. The value is stored in Vault (KV-v2) under its path and materialized into a " +
+			"per-namespace `openinfra-parameters` Secret (flattened path -> UPPER_SNAKE env key) apps read " +
+			"via envFrom. Rides the opt-in `encryption` component.",
+		Attrs: []attr{
+			{Name: "path", Type: tString, Required: true, Description: "Hierarchical path, e.g. `/app/db/host`. Flattened to an env key (upper-case, `/` and `-` -> `_`) in the namespace Secret."},
+			{Name: "value", Type: tString, Required: true, Description: "The parameter value. A SecureString is held encrypted in Vault and delivered via the namespace Secret."},
+			{Name: "type", Type: tString, Default: "String", Description: "`String` (plain) or `SecureString` (sensitive)."},
+			{Name: "tier", Type: tString, Default: "Standard", Description: "`Standard` or `Advanced` (metadata, mirrors SSM tiers)."},
+		},
+	},
+
+	{
 		TypeName: "fault_injection", Kind: "FaultInjection", Plural: "faultinjections",
 		Description: "A deliberate fault, for resilience testing — the FIS-shaped primitive. " +
 			"Compiles to a Chaos Mesh experiment.\n\n" +
