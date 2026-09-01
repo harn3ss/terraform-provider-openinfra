@@ -643,6 +643,18 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "email_sender", Kind: "EmailSender", Plural: "emailsenders",
+		Description: "Transactional email sending — the AWS SES-shaped primitive. Provisions a sending " +
+			"identity (a From address) and emits a `<name>-smtp` connection secret (SMTP host/port/from) " +
+			"apps consume via `spec.secrets` -> envFrom. Backed by the shared in-cluster SMTP relay; rides " +
+			"the opt-in `mail` component. Experimental — internet deliverability needs a smarthost/SPF/DKIM.",
+		Attrs: []attr{
+			{Name: "from_address", Type: tString, Required: true, Description: "The sending identity — the From address, e.g. `noreply@example.com`."},
+			{Name: "from_name", Type: tString, Description: "Optional display name for the From header."},
+		},
+	},
+
+	{
 		TypeName: "fault_injection", Kind: "FaultInjection", Plural: "faultinjections",
 		Description: "A deliberate fault, for resilience testing — the FIS-shaped primitive. " +
 			"Compiles to a Chaos Mesh experiment.\n\n" +
