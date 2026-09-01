@@ -598,6 +598,21 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "user_pool", Kind: "UserPool", Plural: "userpools",
+		Description: "A managed OIDC identity provider (Keycloak) that issues end-user tokens — the AWS " +
+			"Cognito User Pool-shaped primitive. A realm is the pool; a client is an app client. Consumers " +
+			"point their OIDC issuer at the pool's `<name>-userpool` connection secret. Experimental.",
+		Attrs: []attr{
+			{Name: "storage_class", Type: tString, Description: "StorageClass for the pool's persistent volume. Defaults to `longhorn`; set to your cluster's StorageClass on substrates without Longhorn."},
+			{Name: "realm", Type: tString, Description: "The realm to create — the pool itself. Lowercase DNS-label form. Defaults to the resource name."},
+			{Name: "client_id", Type: tString, Description: "The OIDC client (app client) created in the realm; its secret is emitted in the connection secret. Defaults to `openinfra`."},
+			{Name: "hostname", Type: tString, Description: "External hostname for the hosted login/admin UI, exposed over a TLS Ingress. If omitted, the pool is reachable in-cluster only."},
+			{Name: "registration_allowed", Type: tBool, Default: true, Description: "Allow self-service sign-up in the hosted login UI."},
+			{Name: "size", Type: tString, Default: "2Gi", Description: "Storage for the pool's database."},
+		},
+	},
+
+	{
 		TypeName: "fault_injection", Kind: "FaultInjection", Plural: "faultinjections",
 		Description: "A deliberate fault, for resilience testing — the FIS-shaped primitive. " +
 			"Compiles to a Chaos Mesh experiment.\n\n" +
