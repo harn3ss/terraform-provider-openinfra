@@ -613,6 +613,22 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "static_site", Kind: "StaticSite", Plural: "staticsites",
+		Description: "Static frontend hosting for a built SPA — the S3-static-website + CDN-origin-shaped " +
+			"primitive. Provisions a MinIO bucket (upload your dist/ via the emitted `<name>-minio` secret) " +
+			"and serves it over an nginx + Traefik Ingress with SPA history-fallback and cert-manager TLS.",
+		Attrs: []attr{
+			{Name: "domain", Type: tString, Required: true, Description: "Hostname the site is served on, e.g. `app.example.com`."},
+			{Name: "bucket", Type: tString, Description: "MinIO bucket holding the built assets. Defaults to `<name>-site`; created if absent."},
+			{Name: "tls", Type: tBool, Default: true, Description: "Terminate TLS via cert-manager (openinfra-issuer). Set false for plain HTTP."},
+			{Name: "spa", Type: tBool, Default: true, Description: "Single-page-app history fallback: serve the index document for unknown paths."},
+			{Name: "index_document", Type: tString, Default: "index.html", Description: "The index/entry document served at `/`."},
+			{Name: "error_document", Type: tString, Description: "Document served for 404s when `spa` is false (e.g. `404.html`)."},
+			{Name: "sync_interval_seconds", Type: tInt, Default: int64(30), Description: "How often the server re-syncs the bucket to pick up new uploads."},
+		},
+	},
+
+	{
 		TypeName: "fault_injection", Kind: "FaultInjection", Plural: "faultinjections",
 		Description: "A deliberate fault, for resilience testing — the FIS-shaped primitive. " +
 			"Compiles to a Chaos Mesh experiment.\n\n" +
@@ -674,6 +690,9 @@ var genericKinds = []kindSpec{
 				Description: "Hostname the API is served on, e.g. `api.example.com`."},
 			{Name: "tls", Type: tBool, Default: true,
 				Description: "Terminate TLS via cert-manager. Set false for plain HTTP."},
+			{Name: "waf", Type: tBool, Default: false,
+				Description: "Attach an in-cluster L7 WAF (Traefik Coraza / OWASP CRS) to the Ingress. " +
+					"Requires the coraza Traefik plugin enabled on the cluster. Off by default."},
 			{Name: "routes", Type: tObjectList, Required: true, Nested: []attr{
 				{Name: "path", Type: tString, Required: true, Description: "URL path to match, e.g. `/` or `/users`."},
 				{Name: "path_type", Type: tString, Description: "`Prefix` (default), `Exact`, or `ImplementationSpecific`."},

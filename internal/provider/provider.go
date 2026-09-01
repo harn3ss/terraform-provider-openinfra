@@ -109,6 +109,7 @@ var crdKinds = []struct{ typeName, plural, kind string }{
 	{"dataflow", "dataflows", "DataFlow"},
 	{"directory", "directories", "Directory"},
 	{"user_pool", "userpools", "UserPool"},
+	{"static_site", "staticsites", "StaticSite"},
 	{"fault_injection", "faultinjections", "FaultInjection"},
 	{"feature_group", "featuregroups", "FeatureGroup"},
 	{"file_share", "fileshares", "FileShare"},
