@@ -708,9 +708,9 @@ var genericKinds = []kindSpec{
 	},
 	{
 		TypeName: "http_api", Kind: "HttpApi", Plural: "httpapis",
-		Description: "An API-Gateway-style HTTP front door: a hostname with path routes onto " +
-			"`openinfra_function` or `openinfra_application` backends. Compiles to a Traefik Ingress " +
-			"with cert-manager TLS.",
+		Description: "An API-Gateway-style HTTP front door: a hostname with path (and optional " +
+			"per-method) routes onto `openinfra_function` or `openinfra_application` backends. Compiles " +
+			"to a Traefik IngressRoute with cert-manager TLS.",
 		Attrs: []attr{
 			{Name: "domain", Type: tString, Required: true,
 				Description: "Hostname the API is served on, e.g. `api.example.com`."},
@@ -734,9 +734,21 @@ var genericKinds = []kindSpec{
 					{Name: "average", Type: tInt, Description: "Sustained requests per second. Defaults to 100."},
 					{Name: "burst", Type: tInt, Description: "Max burst above the average. Defaults to 50."},
 				}},
+			{Name: "authorizer", Type: tObject,
+				Description: "A JWT authorizer: validate a Bearer OIDC token against an issuer's JWKS before " +
+					"a request reaches a backend (pair with an `openinfra_user_pool` as the issuer). Requires a " +
+					"JWT Traefik plugin enabled on the cluster. Off unless set.",
+				Nested: []attr{
+					{Name: "jwt", Type: tObject, Nested: []attr{
+						{Name: "issuer", Type: tString, Required: true, Description: "OIDC issuer URL; keys fetched from `<issuer>/.well-known/jwks.json`."},
+						{Name: "audience", Type: tStringList, Description: "Accepted token audiences (the `aud` claim). Optional."},
+						{Name: "required", Type: tBool, Description: "Reject requests without a valid token (401). Defaults to true."},
+					}},
+				}},
 			{Name: "routes", Type: tObjectList, Required: true, Nested: []attr{
 				{Name: "path", Type: tString, Required: true, Description: "URL path to match, e.g. `/` or `/users`."},
 				{Name: "path_type", Type: tString, Description: "`Prefix` (default), `Exact`, or `ImplementationSpecific`."},
+				{Name: "methods", Type: tStringList, Description: "HTTP methods this route accepts (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS). Omit to accept all."},
 				{Name: "backend", Type: tObject, Nested: []attr{
 					{Name: "kind", Type: tString, Description: "`Function` (default) or `Application`."},
 					{Name: "name", Type: tString, Required: true, Description: "Name of the backing Function/Application (same namespace)."},
