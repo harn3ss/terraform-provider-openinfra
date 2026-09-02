@@ -719,6 +719,21 @@ var genericKinds = []kindSpec{
 			{Name: "waf", Type: tBool, Default: false,
 				Description: "Attach an in-cluster L7 WAF (Traefik Coraza / OWASP CRS) to the Ingress. " +
 					"Requires the coraza Traefik plugin enabled on the cluster. Off by default."},
+			{Name: "cors", Type: tObject,
+				Description: "Enable CORS (a Traefik headers middleware). Presence turns it on; fields default sensibly.",
+				Nested: []attr{
+					{Name: "allow_origins", Type: tStringList, Description: "Allowed origins. Defaults to `[\"*\"]`."},
+					{Name: "allow_methods", Type: tStringList, Description: "Allowed methods. Defaults to GET/POST/PUT/PATCH/DELETE/OPTIONS."},
+					{Name: "allow_headers", Type: tStringList, Description: "Allowed request headers. Defaults to `[\"*\"]`."},
+					{Name: "allow_credentials", Type: tBool, Description: "Send Access-Control-Allow-Credentials. Defaults to false."},
+					{Name: "max_age", Type: tInt, Description: "Preflight cache seconds. Defaults to 600."},
+				}},
+			{Name: "rate_limit", Type: tObject,
+				Description: "Throttle requests (a Traefik rateLimit middleware). Presence turns it on.",
+				Nested: []attr{
+					{Name: "average", Type: tInt, Description: "Sustained requests per second. Defaults to 100."},
+					{Name: "burst", Type: tInt, Description: "Max burst above the average. Defaults to 50."},
+				}},
 			{Name: "routes", Type: tObjectList, Required: true, Nested: []attr{
 				{Name: "path", Type: tString, Required: true, Description: "URL path to match, e.g. `/` or `/users`."},
 				{Name: "path_type", Type: tString, Description: "`Prefix` (default), `Exact`, or `ImplementationSpecific`."},
