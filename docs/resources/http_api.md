@@ -3,12 +3,12 @@
 page_title: "openinfra_http_api Resource - openinfra"
 subcategory: ""
 description: |-
-  An API-Gateway-style HTTP front door: a hostname with path routes onto openinfra_function or openinfra_application backends. Compiles to a Traefik Ingress with cert-manager TLS.
+  An API-Gateway-style HTTP front door: a hostname with path (and optional per-method) routes onto openinfra_function or openinfra_application backends. Compiles to a Traefik IngressRoute with cert-manager TLS.
 ---
 
 # openinfra_http_api (Resource)
 
-An API-Gateway-style HTTP front door: a hostname with path routes onto `openinfra_function` or `openinfra_application` backends. Compiles to a Traefik Ingress with cert-manager TLS.
+An API-Gateway-style HTTP front door: a hostname with path (and optional per-method) routes onto `openinfra_function` or `openinfra_application` backends. Compiles to a Traefik IngressRoute with cert-manager TLS.
 
 
 
@@ -23,8 +23,12 @@ An API-Gateway-style HTTP front door: a hostname with path routes onto `openinfr
 
 ### Optional
 
+- `authorizer` (Attributes) A JWT authorizer: validate a Bearer OIDC token against an issuer's JWKS before a request reaches a backend (pair with an `openinfra_user_pool` as the issuer). Requires a JWT Traefik plugin enabled on the cluster. Off unless set. (see [below for nested schema](#nestedatt--authorizer))
+- `cors` (Attributes) Enable CORS (a Traefik headers middleware). Presence turns it on; fields default sensibly. (see [below for nested schema](#nestedatt--cors))
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
+- `rate_limit` (Attributes) Throttle requests (a Traefik rateLimit middleware). Presence turns it on. (see [below for nested schema](#nestedatt--rate_limit))
 - `tls` (Boolean) Terminate TLS via cert-manager. Set false for plain HTTP.
+- `waf` (Boolean) Attach an in-cluster L7 WAF (Traefik Coraza / OWASP CRS) to the Ingress. Requires the coraza Traefik plugin enabled on the cluster. Off by default.
 
 ### Read-Only
 
@@ -42,6 +46,7 @@ Required:
 Optional:
 
 - `backend` (Attributes) (see [below for nested schema](#nestedatt--routes--backend))
+- `methods` (List of String) HTTP methods this route accepts (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS). Omit to accept all.
 - `path_type` (String) `Prefix` (default), `Exact`, or `ImplementationSpecific`.
 
 <a id="nestedatt--routes--backend"></a>
@@ -55,3 +60,46 @@ Optional:
 
 - `kind` (String) `Function` (default) or `Application`.
 - `port` (Number) Backend Service port. Defaults to `80`.
+
+
+
+<a id="nestedatt--authorizer"></a>
+### Nested Schema for `authorizer`
+
+Optional:
+
+- `jwt` (Attributes) (see [below for nested schema](#nestedatt--authorizer--jwt))
+
+<a id="nestedatt--authorizer--jwt"></a>
+### Nested Schema for `authorizer.jwt`
+
+Required:
+
+- `issuer` (String) OIDC issuer URL; keys fetched from `<issuer>/.well-known/jwks.json`.
+
+Optional:
+
+- `audience` (List of String) Accepted token audiences (the `aud` claim). Optional.
+- `required` (Boolean) Reject requests without a valid token (401). Defaults to true.
+
+
+
+<a id="nestedatt--cors"></a>
+### Nested Schema for `cors`
+
+Optional:
+
+- `allow_credentials` (Boolean) Send Access-Control-Allow-Credentials. Defaults to false.
+- `allow_headers` (List of String) Allowed request headers. Defaults to `["*"]`.
+- `allow_methods` (List of String) Allowed methods. Defaults to GET/POST/PUT/PATCH/DELETE/OPTIONS.
+- `allow_origins` (List of String) Allowed origins. Defaults to `["*"]`.
+- `max_age` (Number) Preflight cache seconds. Defaults to 600.
+
+
+<a id="nestedatt--rate_limit"></a>
+### Nested Schema for `rate_limit`
+
+Optional:
+
+- `average` (Number) Sustained requests per second. Defaults to 100.
+- `burst` (Number) Max burst above the average. Defaults to 50.
