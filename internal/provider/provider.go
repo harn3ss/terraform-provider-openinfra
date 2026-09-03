@@ -128,6 +128,7 @@ var crdKinds = []struct{ typeName, plural, kind string }{
 	{"security_group", "securitygroups", "SecurityGroup"},
 	{"state_machine", "statemachines", "StateMachine"},
 	{"stream", "streams", "Stream"},
+	{"table", "tables", "Table"},
 	{"training_job", "trainingjobs", "TrainingJob"},
 	{"virtual_machine", "virtualmachines", "VirtualMachine"},
 	{"vm_image", "vmimages", "VmImage"},
