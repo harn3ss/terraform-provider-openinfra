@@ -312,6 +312,35 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "table", Kind: "Table", Plural: "tables",
+		Description: "A DynamoDB-shaped key/value table — the DynamoDB-equivalent primitive. Registers a " +
+			"table's name and (immutable) key schema on the aws-shim's DynamoDB data layer so items are " +
+			"writable without a runtime CreateTable. A thin front onto a data-plane capability: it functions " +
+			"only where the aws-shim DynamoDB front door is enabled (opt-in), and does not provision " +
+			"capacity, secondary indexes, or streams — reach for `openinfra_database` when you need those.",
+		Attrs: []attr{
+			{Name: "table_name", Type: tString, Replaces: true,
+				Description: "The DynamoDB table name clients address. Defaults to the resource name. Immutable."},
+			{Name: "hash_key", Type: tObject, Required: true, Replaces: true,
+				Description: "The partition (HASH) key. Immutable, as in DynamoDB.",
+				Nested: []attr{
+					{Name: "name", Type: tString, Required: true, Description: "Attribute name of the partition key."},
+					{Name: "type", Type: tString, Required: true, Description: "Scalar key type: `S` (string), `N` (number), or `B` (binary)."},
+				}},
+			{Name: "range_key", Type: tObject, Replaces: true,
+				Description: "The optional sort (RANGE) key. Immutable, as in DynamoDB.",
+				Nested: []attr{
+					{Name: "name", Type: tString, Required: true, Description: "Attribute name of the sort key."},
+					{Name: "type", Type: tString, Required: true, Description: "Scalar key type: `S`, `N`, or `B`."},
+				}},
+			{Name: "billing_mode", Type: tString, Default: "PAY_PER_REQUEST",
+				Description: "Advisory only — the FerretDB-backed store has no capacity model. `PAY_PER_REQUEST` (default) or `PROVISIONED`."},
+			{Name: "ttl_attribute", Type: tString,
+				Description: "Optional. Enables Time-To-Live on this numeric (epoch-seconds) attribute; the shim's reaper deletes items whose value is at or before now."},
+		},
+	},
+
+	{
 		TypeName: "file_share", Kind: "FileShare", Plural: "fileshares",
 		Description: "A shared filesystem exported over SMB — the EFS/FSx-shaped primitive.",
 		Attrs: []attr{
