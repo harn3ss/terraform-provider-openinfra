@@ -386,6 +386,24 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "queue", Kind: "Queue", Plural: "queues",
+		Description: "A standalone managed message queue / topic (the AWS SQS + SNS-shaped primitive), backed by a " +
+			"NATS JetStream stream. Emits a `<name>-queue` connection Secret (NATS_URL / QUEUE_STREAM / " +
+			"QUEUE_SUBJECT). The standalone counterpart to an Application's `queues` block.",
+		Attrs: []attr{
+			{Name: "queue_name", Type: tString, Replaces: true,
+				Description: "The queue/stream name (and the subject apps publish to). Defaults to the resource name. Immutable."},
+			{Name: "fanout", Type: tBool, Default: false, Replaces: true,
+				Description: "`false` (default) = a work queue (each message to one consumer, removed on ack — SQS). " +
+					"`true` = a fan-out topic (messages retained; every consumer reads them — SNS pub/sub). Set at creation."},
+			{Name: "retention_hours", Type: tInt, Default: int64(96),
+				Description: "How long messages are retained (JetStream max-age), in hours. Default 96 (4 days, matching SQS)."},
+			{Name: "max_bytes", Type: tInt,
+				Description: "Optional cap on total stored bytes for the stream. Unset = no byte limit."},
+		},
+	},
+
+	{
 		TypeName: "file_share", Kind: "FileShare", Plural: "fileshares",
 		Description: "A shared filesystem exported over SMB — the EFS/FSx-shaped primitive.",
 		Attrs: []attr{
