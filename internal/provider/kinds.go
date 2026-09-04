@@ -303,6 +303,14 @@ var genericKinds = []kindSpec{
 				Nested: []attr{
 					{Name: "snapshot", Type: tString, Description: "VolumeSnapshot name in the same namespace."},
 				}},
+			{Name: "encrypted", Type: tBool, Default: false, Replaces: true,
+				Description: "Encrypt the volume at rest with LUKS (the `longhorn-encrypted` class). The per-volume " +
+					"passphrase is a Vault Transit data key wrapped by `encryption_key`, so destroying that " +
+					"`openinfra_encryption_key` crypto-erases the volume. Requires the opt-in encryption component and " +
+					"`encryption_key`. Set at creation, so changing it replaces the volume."},
+			{Name: "encryption_key", Type: tString, Replaces: true,
+				Description: "Name of the `kind: EncryptionKey` (a Vault Transit KEK) that protects an encrypted volume. " +
+					"Required when `encrypted` is true; ignored otherwise."},
 		},
 		Status: []statusAttr{
 			{Name: "phase", Type: tString},
