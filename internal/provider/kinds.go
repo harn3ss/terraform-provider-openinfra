@@ -356,6 +356,28 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "bucket", Kind: "Bucket", Plural: "buckets",
+		Description: "A standalone S3-compatible object store (MinIO) — the object-storage primitive, the analog of " +
+			"`openinfra_volume` for block storage. Emits a `<name>-minio` connection Secret (endpoint/bucket/keys). " +
+			"Server-side encryption is not set here (it rides the opt-in objectEncryption stack); use an Application's " +
+			"`storage.buckets` instead when a bucket belongs to one app.",
+		Attrs: []attr{
+			{Name: "bucket_name", Type: tString, Replaces: true,
+				Description: "The S3 bucket name (DNS-compatible). Defaults to the resource name. Immutable."},
+			{Name: "versioning", Type: tBool, Default: false,
+				Description: "Keep prior versions of overwritten/deleted objects."},
+			{Name: "lifecycle_rules", Type: tObjectList,
+				Description: "Object lifecycle (expiration) rules, applied in the background by MinIO.",
+				Nested: []attr{
+					{Name: "id", Type: tString, Required: true, Description: "Rule id (unique within the bucket)."},
+					{Name: "prefix", Type: tString, Description: "Apply only under this key prefix. Empty = the whole bucket."},
+					{Name: "expire_days", Type: tInt, Description: "Delete current-version objects this many days after creation."},
+					{Name: "noncurrent_expire_days", Type: tInt, Description: "Delete non-current (prior) versions this many days after they become non-current. Pairs with versioning."},
+				}},
+		},
+	},
+
+	{
 		TypeName: "file_share", Kind: "FileShare", Plural: "fileshares",
 		Description: "A shared filesystem exported over SMB — the EFS/FSx-shaped primitive.",
 		Attrs: []attr{
