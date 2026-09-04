@@ -337,6 +337,21 @@ var genericKinds = []kindSpec{
 				Description: "Advisory only — the FerretDB-backed store has no capacity model. `PAY_PER_REQUEST` (default) or `PROVISIONED`."},
 			{Name: "ttl_attribute", Type: tString,
 				Description: "Optional. Enables Time-To-Live on this numeric (epoch-seconds) attribute; the shim's reaper deletes items whose value is at or before now."},
+			{Name: "global_secondary_indexes", Type: tObjectList,
+				Description: "Global secondary indexes — query the table by a non-primary key. Each is backed by a real Mongo index; a Query with this index's name filters on its key attributes. The store keeps full items, so projection is always effectively ALL.",
+				Nested: []attr{
+					{Name: "name", Type: tString, Required: true, Description: "Index name — the Query IndexName."},
+					{Name: "hash_key", Type: tObject, Required: true, Description: "The index's partition key.",
+						Nested: []attr{
+							{Name: "name", Type: tString, Required: true, Description: "Attribute name of the index partition key."},
+							{Name: "type", Type: tString, Required: true, Description: "Scalar key type: `S`, `N`, or `B`."},
+						}},
+					{Name: "range_key", Type: tObject, Description: "The index's optional sort key.",
+						Nested: []attr{
+							{Name: "name", Type: tString, Required: true, Description: "Attribute name of the index sort key."},
+							{Name: "type", Type: tString, Required: true, Description: "Scalar key type: `S`, `N`, or `B`."},
+						}},
+				}},
 		},
 	},
 

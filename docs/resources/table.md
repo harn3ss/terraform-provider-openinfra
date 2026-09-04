@@ -23,6 +23,7 @@ A DynamoDB-shaped key/value table — the DynamoDB-equivalent primitive. Registe
 ### Optional
 
 - `billing_mode` (String) Advisory only — the FerretDB-backed store has no capacity model. `PAY_PER_REQUEST` (default) or `PROVISIONED`.
+- `global_secondary_indexes` (Attributes List) Global secondary indexes — query the table by a non-primary key. Each is backed by a real Mongo index; a Query with this index's name filters on its key attributes. The store keeps full items, so projection is always effectively ALL. (see [below for nested schema](#nestedatt--global_secondary_indexes))
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `range_key` (Attributes) The optional sort (RANGE) key. Immutable, as in DynamoDB. (see [below for nested schema](#nestedatt--range_key))
 - `table_name` (String) The DynamoDB table name clients address. Defaults to the resource name. Immutable.
@@ -40,6 +41,37 @@ Required:
 
 - `name` (String) Attribute name of the partition key.
 - `type` (String) Scalar key type: `S` (string), `N` (number), or `B` (binary).
+
+
+<a id="nestedatt--global_secondary_indexes"></a>
+### Nested Schema for `global_secondary_indexes`
+
+Required:
+
+- `hash_key` (Attributes) The index's partition key. (see [below for nested schema](#nestedatt--global_secondary_indexes--hash_key))
+- `name` (String) Index name — the Query IndexName.
+
+Optional:
+
+- `range_key` (Attributes) The index's optional sort key. (see [below for nested schema](#nestedatt--global_secondary_indexes--range_key))
+
+<a id="nestedatt--global_secondary_indexes--hash_key"></a>
+### Nested Schema for `global_secondary_indexes.hash_key`
+
+Required:
+
+- `name` (String) Attribute name of the index partition key.
+- `type` (String) Scalar key type: `S`, `N`, or `B`.
+
+
+<a id="nestedatt--global_secondary_indexes--range_key"></a>
+### Nested Schema for `global_secondary_indexes.range_key`
+
+Required:
+
+- `name` (String) Attribute name of the index sort key.
+- `type` (String) Scalar key type: `S`, `N`, or `B`.
+
 
 
 <a id="nestedatt--range_key"></a>
