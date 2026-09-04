@@ -23,11 +23,13 @@ A managed database — a data-only `kind: Application`. Compiles to the engine's
 ### Optional
 
 - `database_name` (String) Logical database name. Defaults to the resource name.
+- `encryption_key` (String) Name of the `kind: EncryptionKey` (a Vault Transit KEK) protecting the database's storage. Required when `storage_encrypted` is true.
 - `expose` (Boolean) Publish the database on a LAN address.
 - `high_availability` (Boolean) Run a replicated/clustered topology where the engine supports it.
 - `namespace` (String)
 - `stopped` (Boolean) Stop the database (RDS-style): compute is scaled to zero, storage retained.
 - `storage_class` (String) StorageClass for the database's persistent volumes. When unset, the engine keeps its default (local-path; babelfish: longhorn). Set to your cluster's StorageClass on substrates without local-path, or to pin the database onto replicated storage (e.g. longhorn).
+- `storage_encrypted` (Boolean) Encrypt the database's storage at rest with LUKS (`longhorn-encrypted`), keyed by a customer `openinfra_encryption_key` via `encryption_key` — destroying that key crypto-erases the data. Overrides `storage_class`. Requires the opt-in encryption component. v1: `postgres` engine only.
 
 ### Read-Only
 

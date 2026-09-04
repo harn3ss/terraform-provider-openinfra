@@ -35,6 +35,8 @@ type databaseModel struct {
 	Expose           types.Bool   `tfsdk:"expose"`
 	Stopped          types.Bool   `tfsdk:"stopped"`
 	StorageClass     types.String `tfsdk:"storage_class"`
+	StorageEncrypted types.Bool   `tfsdk:"storage_encrypted"`
+	EncryptionKey    types.String `tfsdk:"encryption_key"`
 	ID               types.String `tfsdk:"id"`
 	Ready            types.Bool   `tfsdk:"ready"`
 	ConnectionSecret types.String `tfsdk:"connection_secret"`
@@ -87,6 +89,17 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					"default (local-path; babelfish: longhorn). Set to your cluster's StorageClass on substrates without " +
 					"local-path, or to pin the database onto replicated storage (e.g. longhorn).",
 			},
+			"storage_encrypted": schema.BoolAttribute{
+				Optional: true,
+				MarkdownDescription: "Encrypt the database's storage at rest with LUKS (`longhorn-encrypted`), keyed by a " +
+					"customer `openinfra_encryption_key` via `encryption_key` — destroying that key crypto-erases the data. " +
+					"Overrides `storage_class`. Requires the opt-in encryption component. v1: `postgres` engine only.",
+			},
+			"encryption_key": schema.StringAttribute{
+				Optional: true,
+				MarkdownDescription: "Name of the `kind: EncryptionKey` (a Vault Transit KEK) protecting the database's " +
+					"storage. Required when `storage_encrypted` is true.",
+			},
 			"id": schema.StringAttribute{
 				Computed:      true,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
@@ -134,6 +147,12 @@ func (m databaseModel) manifest() map[string]any {
 	}
 	if !m.StorageClass.IsNull() && m.StorageClass.ValueString() != "" {
 		db["storageClass"] = m.StorageClass.ValueString()
+	}
+	if !m.StorageEncrypted.IsNull() && m.StorageEncrypted.ValueBool() {
+		db["storageEncrypted"] = true
+	}
+	if !m.EncryptionKey.IsNull() && m.EncryptionKey.ValueString() != "" {
+		db["encryptionKey"] = m.EncryptionKey.ValueString()
 	}
 	return map[string]any{
 		"apiVersion": client.Group + "/" + client.Version,
