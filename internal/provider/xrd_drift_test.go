@@ -67,6 +67,7 @@ func TestKindsMatchXRDs(t *testing.T) {
 		"application.secrets":        true,
 		"application.securityGroups": true,
 		"application.storage":        true,
+		"application.sidecars":       true, // curated flat resource stays single-container; sidecars via kubectl/GitOps
 
 		// --- bespoke: database (maps to Application spec.database) ---
 		"database.name":   true, // exposed as `database_name` (metadata name is the Application name)
