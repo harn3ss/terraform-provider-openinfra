@@ -30,6 +30,8 @@ A `kind: VirtualMachine` — a KubeVirt VM (Linux or Windows) with a persistent 
 - `namespace` (String) Namespace to create the VM in.
 - `network` (String) Network mode, e.g. `masquerade`.
 - `running` (Boolean) Whether the VM should be powered on. Set `false` to stop it while keeping its disk.
+- `subnet` (String) Place the VM's primary interface in this `kind: Subnet` (real kube-ovn OVN isolation, #120). Omit for the default network. Changing it replaces the VM.
+- `user_data` (String) cloud-init user-data run at first boot (Linux guests). Changing it replaces the VM — cloud-init only runs on first boot.
 
 ### Read-Only
 

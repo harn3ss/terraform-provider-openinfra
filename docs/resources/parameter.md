@@ -23,6 +23,7 @@ A hierarchical, optionally-encrypted parameter — the AWS SSM Parameter Store-s
 
 ### Optional
 
+- `expires_at` (String) Optional RFC-3339 expiry (SSM Parameter expiration policy); a reaper deletes the parameter after this time.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `tier` (String) `Standard` or `Advanced` (metadata, mirrors SSM tiers).
 - `type` (String) `String` (plain) or `SecureString` (sensitive).
