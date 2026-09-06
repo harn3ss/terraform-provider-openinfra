@@ -442,6 +442,106 @@ var genericKinds = []kindSpec{
 		},
 	},
 
+	// --- kube-ovn networking family (#120). These REQUIRE the kube-ovn CNI; on a Canal cluster the
+	//     composition doesn't render (inert), but the kinds are HCL-expressible regardless. Their XRDs
+	//     live in open-infra platform/networking/kube-ovn (not abstraction), so the drift guard's
+	//     loadXRDDocs also scans that sibling dir. ---
+	{
+		TypeName: "vpc", Kind: "Vpc", Plural: "vpcs",
+		Description: "An isolated tenant network domain (kube-ovn) — the AWS VPC. Subnets in different VPCs are fully isolated. Requires the kube-ovn CNI.",
+		Attrs: []attr{
+			{Name: "namespaces", Type: tStringList, Description: "Namespaces bound to this VPC (their default subnet lives here)."},
+			{Name: "routes", Type: tObjectList, Description: "The VPC route table, e.g. 0.0.0.0/0 -> a NatGateway internalIp.",
+				Nested: []attr{
+					{Name: "cidr", Type: tString, Required: true, Description: "Destination CIDR, e.g. 0.0.0.0/0."},
+					{Name: "next_hop", Type: tString, Required: true, Description: "Next-hop IP (a NatGateway internalIp, or a peer-link far side)."},
+				}},
+			{Name: "peerings", Type: tObjectList, Description: "VPC peerings — a /30 interconnect to another kind: Vpc (declare on both, plus a route each). Non-transitive, like AWS.",
+				Nested: []attr{
+					{Name: "remote_vpc", Type: tString, Required: true, Description: "The kind: Vpc on the other end."},
+					{Name: "local_connect_ip", Path: []string{"localConnectIP"}, Type: tString, Required: true, Description: "This VPC's IP on the /30 link, e.g. 169.254.100.1/30."},
+				}},
+		},
+	},
+	{
+		TypeName: "subnet", Kind: "Subnet", Plural: "subnets",
+		Description: "A topologically-isolated network segment (kube-ovn) — the AWS Subnet, enforced by OVN not NetworkPolicy. Requires the kube-ovn CNI.",
+		Attrs: []attr{
+			{Name: "cidr", Type: tString, Required: true, Replaces: true, Description: "IPv4 CIDR, e.g. 10.20.0.0/24. Must not overlap other subnets. Immutable."},
+			{Name: "vpc", Type: tString, Replaces: true, Description: "Parent kind: Vpc. Omit for the default VPC."},
+			{Name: "private", Type: tBool, Default: true, Description: "OVN-enforced isolation: only this subnet + allow_subnets may reach it. Public-facing (EIP/DNAT target) workloads need private=false."},
+			{Name: "allow_subnets", Type: tStringList, Description: "CIDRs explicitly allowed to reach a private subnet."},
+			{Name: "namespaces", Type: tStringList, Description: "Namespaces whose pods draw IPs from this subnet."},
+			{Name: "gateway", Type: tString, Description: "Gateway IP. Defaults to the first usable address in the CIDR."},
+			{Name: "acls", Type: tObjectList, Description: "Network ACL — stateless subnet rules (OVN), distinct from the stateful kind: SecurityGroup.",
+				Nested: []attr{
+					{Name: "direction", Type: tString, Required: true, Description: "ingress (to workloads on this subnet) or egress (from them)."},
+					{Name: "action", Type: tString, Required: true, Description: "allow or drop."},
+					{Name: "priority", Type: tInt, Description: "Higher wins (0-32767). Default 1000."},
+					{Name: "protocol", Type: tString, Description: "tcp, udp, icmp, or all (default)."},
+					{Name: "cidr", Type: tString, Description: "Peer CIDR — source for ingress, destination for egress."},
+					{Name: "port", Type: tInt, Description: "L4 destination port."},
+					{Name: "match", Type: tString, Description: "Raw OVN match expression — overrides the structured fields."},
+				}},
+		},
+	},
+	{
+		TypeName: "nat_gateway", Kind: "NatGateway", Plural: "natgateways",
+		Description: "The border device for a private kind: Vpc (kube-ovn VpcNatGateway) — the AWS NAT Gateway (SNAT egress) and, on a flat /24, the Internet-Gateway role. Requires the kube-ovn CNI.",
+		Attrs: []attr{
+			{Name: "vpc", Type: tString, Required: true, Replaces: true, Description: "The parent kind: Vpc."},
+			{Name: "subnet", Type: tString, Required: true, Replaces: true, Description: "A kind: Subnet in the VPC hosting the gateway's internal leg."},
+			{Name: "internal_ip", Type: tString, Required: true, Description: "The gateway's IP on `subnet` (lanIp). Set the VPC's default route (kind: Vpc routes) to this."},
+			{Name: "external_network", Type: tString, Default: "ovn-vpc-external-network", Description: "The external (macvlan) network for public IPs."},
+			{Name: "egress", Type: tObject, Description: "SNAT egress — the AWS NAT-Gateway function.",
+				Nested: []attr{
+					{Name: "public_ip", Type: tString, Description: "The egress public IP. Omit to auto-allocate."},
+					{Name: "source_cidrs", Type: tStringList, Description: "Private CIDRs whose outbound traffic is SNAT'd to public_ip."},
+				}},
+			{Name: "node_selector", Type: tStringMap, Description: "Node placement for the gateway pod (a stable edge node, not a chaos-tested one)."},
+		},
+	},
+	{
+		TypeName: "elastic_ip", Kind: "ElasticIp", Plural: "elasticips",
+		Description: "A static public IP on a kind: NatGateway (kube-ovn IptablesEIP) — the AWS Elastic IP, optionally associated with a private workload (fip 1:1 or per-port dnat). Requires the kube-ovn CNI.",
+		Attrs: []attr{
+			{Name: "nat_gateway", Type: tString, Required: true, Description: "The kind: NatGateway that hosts this address."},
+			{Name: "external_network", Type: tString, Default: "ovn-vpc-external-network", Description: "The external network the address is drawn from. Must match the gateway's."},
+			{Name: "address", Type: tString, Description: "A specific public IP from the external range. Omit to auto-allocate."},
+			{Name: "target", Type: tString, Description: "The private IP to associate with. The target MUST sit on a PUBLIC kind: Subnet (private=false). Omit for an unassociated EIP."},
+			{Name: "mode", Type: tString, Default: "fip", Description: "Association mode when target is set: fip (1:1 whole-IP, bidirectional) or dnat (per-port, needs ports)."},
+			{Name: "ports", Type: tObjectList, Description: "For mode=dnat: the port forwards from this address to target.",
+				Nested: []attr{
+					{Name: "external", Type: tString, Required: true, Description: "Public-facing port."},
+					{Name: "internal", Type: tString, Required: true, Description: "Target port on the workload."},
+					{Name: "protocol", Type: tString, Description: "tcp (default) or udp."},
+				}},
+		},
+		Status: []statusAttr{{Name: "allocated_address", Path: []string{"address"}, Type: tString, Description: "The allocated public IP (when address is auto-assigned)."}},
+	},
+	{
+		TypeName: "transit_gateway", Kind: "TransitGateway", Plural: "transitgateways",
+		Description: "A hub for many kind: Vpc spokes giving transitive routing (a subnet-less kube-ovn hub Vpc) — the AWS Transit Gateway. Each spoke is also wired on its own kind: Vpc. Requires the kube-ovn CNI.",
+		Attrs: []attr{
+			{Name: "attachments", Type: tObjectList, Description: "The spoke VPCs attached to this hub (a /30 peer link + a route to each spoke's CIDR).",
+				Nested: []attr{
+					{Name: "vpc", Type: tString, Required: true, Description: "The spoke kind: Vpc."},
+					{Name: "cidr", Type: tString, Required: true, Description: "The spoke's subnet CIDR, routed to via the hub."},
+					{Name: "hub_connect_ip", Path: []string{"hubConnectIP"}, Type: tString, Required: true, Description: "The hub's IP on this spoke's /30, e.g. 169.254.101.1/30."},
+					{Name: "spoke_connect_ip", Path: []string{"spokeConnectIP"}, Type: tString, Required: true, Description: "The spoke's IP on the /30 (route next-hop from the hub)."},
+				}},
+		},
+	},
+	{
+		TypeName: "flow_log", Kind: "FlowLog", Plural: "flowlogs",
+		Description: "VPC-style flow logging via OVS sFlow -> a node-local collector -> Loki (kube-ovn) — the AWS VPC Flow Logs. Per-bridge (per-node), sampled; scope to a VPC by filtering records on CIDR in Loki. Requires the kube-ovn CNI.",
+		Attrs: []attr{
+			{Name: "sampling_rate", Type: tInt, Default: int64(64), Description: "1:N packet sampling. 64 is a sane default; 1 samples every packet (debug only)."},
+			{Name: "collector_namespace", Path: []string{"namespace"}, Type: tString, Default: "kube-system", Description: "Namespace for the collector DaemonSet (the XRD's spec.namespace)."},
+			{Name: "node_selector", Type: tStringMap, Description: "Which nodes to capture on (label key -> value). Omit for all nodes."},
+		},
+	},
+
 	{
 		TypeName: "model", Kind: "Model", Plural: "models",
 		Description: "A served language model with an OpenAI-compatible endpoint, or (with `serve`) " +
