@@ -42,6 +42,8 @@ type virtualMachineModel struct {
 	HighAvailability types.Bool   `tfsdk:"high_availability"`
 	CPUModel         types.String `tfsdk:"cpu_model"`
 	Network          types.String `tfsdk:"network"`
+	Subnet           types.String `tfsdk:"subnet"`
+	UserData         types.String `tfsdk:"user_data"`
 	ID               types.String `tfsdk:"id"`
 	Ready            types.Bool   `tfsdk:"ready"`
 	IP               types.String `tfsdk:"ip"`
@@ -107,6 +109,16 @@ func (r *virtualMachineResource) Schema(_ context.Context, _ resource.SchemaRequ
 				Optional:            true,
 				MarkdownDescription: "Network mode, e.g. `masquerade`.",
 			},
+			"subnet": schema.StringAttribute{
+				Optional: true,
+				MarkdownDescription: "Place the VM's primary interface in this `kind: Subnet` (real kube-ovn OVN isolation, #120). Omit for the default network. Changing it replaces the VM.",
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			},
+			"user_data": schema.StringAttribute{
+				Optional: true,
+				MarkdownDescription: "cloud-init user-data run at first boot (Linux guests). Changing it replaces the VM — cloud-init only runs on first boot.",
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "`namespace/name` identifier.",
@@ -160,6 +172,12 @@ func (m virtualMachineModel) manifest() map[string]any {
 	}
 	if !m.Network.IsNull() && m.Network.ValueString() != "" {
 		spec["network"] = m.Network.ValueString()
+	}
+	if !m.Subnet.IsNull() && m.Subnet.ValueString() != "" {
+		spec["subnet"] = m.Subnet.ValueString()
+	}
+	if !m.UserData.IsNull() && m.UserData.ValueString() != "" {
+		spec["userData"] = m.UserData.ValueString()
 	}
 	return map[string]any{
 		"apiVersion": client.Group + "/" + client.Version,

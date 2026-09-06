@@ -21,7 +21,9 @@ A standalone managed message queue / topic (the AWS SQS + SNS-shaped primitive),
 
 ### Optional
 
+- `deduplication_window_minutes` (Number) FIFO dedup window in minutes (JetStream dupe-window), matching SQS FIFO's 5-minute default. Applies when fifo=true.
 - `fanout` (Boolean) `false` (default) = a work queue (each message to one consumer, removed on ack — SQS). `true` = a fan-out topic (messages retained; every consumer reads them — SNS pub/sub). Set at creation.
+- `fifo` (Boolean) `true` = a FIFO queue: strict per-message-group ordering (MessageGroupId) + publish dedup. Set at creation — a standard queue can't become FIFO.
 - `max_bytes` (Number) Optional cap on total stored bytes for the stream. Unset = no byte limit.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `queue_name` (String) The queue/stream name (and the subject apps publish to). Defaults to the resource name. Immutable.

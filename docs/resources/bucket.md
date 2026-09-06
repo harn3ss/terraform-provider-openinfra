@@ -24,6 +24,7 @@ A standalone S3-compatible object store (MinIO) — the object-storage primitive
 - `bucket_name` (String) The S3 bucket name (DNS-compatible). Defaults to the resource name. Immutable.
 - `lifecycle_rules` (Attributes List) Object lifecycle (expiration) rules, applied in the background by MinIO. (see [below for nested schema](#nestedatt--lifecycle_rules))
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
+- `object_lock` (Attributes) WORM retention (S3 Object Lock), enforced by MinIO. Set only at creation and auto-enables versioning. In COMPLIANCE mode not even an admin can delete or shorten a locked object's retention until it expires. (see [below for nested schema](#nestedatt--object_lock))
 - `versioning` (Boolean) Keep prior versions of overwritten/deleted objects.
 
 ### Read-Only
@@ -43,3 +44,16 @@ Optional:
 - `expire_days` (Number) Delete current-version objects this many days after creation.
 - `noncurrent_expire_days` (Number) Delete non-current (prior) versions this many days after they become non-current. Pairs with versioning.
 - `prefix` (String) Apply only under this key prefix. Empty = the whole bucket.
+
+
+<a id="nestedatt--object_lock"></a>
+### Nested Schema for `object_lock`
+
+Required:
+
+- `mode` (String) `GOVERNANCE` (privileged users can override) or `COMPLIANCE` (no one can, until expiry).
+
+Optional:
+
+- `days` (Number) Default retention period in days (mutually exclusive with years).
+- `years` (Number) Default retention period in years (mutually exclusive with days).

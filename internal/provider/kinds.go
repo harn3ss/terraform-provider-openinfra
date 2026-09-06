@@ -382,6 +382,13 @@ var genericKinds = []kindSpec{
 					{Name: "expire_days", Type: tInt, Description: "Delete current-version objects this many days after creation."},
 					{Name: "noncurrent_expire_days", Type: tInt, Description: "Delete non-current (prior) versions this many days after they become non-current. Pairs with versioning."},
 				}},
+			{Name: "object_lock", Type: tObject, Replaces: true,
+				Description: "WORM retention (S3 Object Lock), enforced by MinIO. Set only at creation and auto-enables versioning. In COMPLIANCE mode not even an admin can delete or shorten a locked object's retention until it expires.",
+				Nested: []attr{
+					{Name: "mode", Type: tString, Required: true, Description: "`GOVERNANCE` (privileged users can override) or `COMPLIANCE` (no one can, until expiry)."},
+					{Name: "days", Type: tInt, Description: "Default retention period in days (mutually exclusive with years)."},
+					{Name: "years", Type: tInt, Description: "Default retention period in years (mutually exclusive with days)."},
+				}},
 		},
 	},
 
@@ -400,6 +407,10 @@ var genericKinds = []kindSpec{
 				Description: "How long messages are retained (JetStream max-age), in hours. Default 96 (4 days, matching SQS)."},
 			{Name: "max_bytes", Type: tInt,
 				Description: "Optional cap on total stored bytes for the stream. Unset = no byte limit."},
+			{Name: "fifo", Type: tBool, Default: false, Replaces: true,
+				Description: "`true` = a FIFO queue: strict per-message-group ordering (MessageGroupId) + publish dedup. Set at creation — a standard queue can't become FIFO."},
+			{Name: "deduplication_window_minutes", Type: tInt, Default: int64(5),
+				Description: "FIFO dedup window in minutes (JetStream dupe-window), matching SQS FIFO's 5-minute default. Applies when fifo=true."},
 		},
 	},
 
@@ -731,6 +742,7 @@ var genericKinds = []kindSpec{
 			{Name: "value", Type: tString, Required: true, Description: "The parameter value. A SecureString is held encrypted in Vault and delivered via the namespace Secret."},
 			{Name: "type", Type: tString, Default: "String", Description: "`String` (plain) or `SecureString` (sensitive)."},
 			{Name: "tier", Type: tString, Default: "Standard", Description: "`Standard` or `Advanced` (metadata, mirrors SSM tiers)."},
+			{Name: "expires_at", Type: tString, Description: "Optional RFC-3339 expiry (SSM Parameter expiration policy); a reaper deletes the parameter after this time."},
 		},
 	},
 
