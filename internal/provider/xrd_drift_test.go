@@ -236,6 +236,13 @@ func loadXRDDocs(t *testing.T, dir string) map[string]map[string]any {
 	if err != nil || len(paths) == 0 {
 		t.Fatalf("no XRDs matched %s/*xrd*.yaml: %v", dir, err)
 	}
+	// The kube-ovn networking family (Vpc/Subnet/NatGateway/ElasticIp/TransitGateway/FlowLog) lives
+	// in a sibling subdir (platform/networking/kube-ovn), deliberately outside abstraction so it stays
+	// Canal-inert in GitOps. Those kinds ARE mirrored in the provider, so the guard must see their
+	// XRDs too. dir is .../platform/abstraction, so the sibling is ../networking/kube-ovn.
+	if extra, _ := filepath.Glob(filepath.Join(dir, "..", "networking", "kube-ovn", "*xrd*.yaml")); len(extra) > 0 {
+		paths = append(paths, extra...)
+	}
 	out := map[string]map[string]any{}
 	for _, p := range paths {
 		b, err := os.ReadFile(p)
