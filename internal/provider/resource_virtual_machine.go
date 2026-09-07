@@ -110,12 +110,12 @@ func (r *virtualMachineResource) Schema(_ context.Context, _ resource.SchemaRequ
 				MarkdownDescription: "Network mode, e.g. `masquerade`.",
 			},
 			"subnet": schema.StringAttribute{
-				Optional: true,
+				Optional:            true,
 				MarkdownDescription: "Place the VM's primary interface in this `kind: Subnet` (real kube-ovn OVN isolation, #120). Omit for the default network. Changing it replaces the VM.",
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
 			"user_data": schema.StringAttribute{
-				Optional: true,
+				Optional:            true,
 				MarkdownDescription: "cloud-init user-data run at first boot (Linux guests). Changing it replaces the VM — cloud-init only runs on first boot.",
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.RequiresReplace()},
 			},
