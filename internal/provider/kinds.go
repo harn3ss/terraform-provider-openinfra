@@ -389,6 +389,8 @@ var genericKinds = []kindSpec{
 					{Name: "days", Type: tInt, Description: "Default retention period in days (mutually exclusive with years)."},
 					{Name: "years", Type: tInt, Description: "Default retention period in years (mutually exclusive with days)."},
 				}},
+			{Name: "policy", Type: tString,
+				Description: "An S3/MinIO bucket-policy JSON document applied verbatim via put-bucket-policy. Principals must be `*` (public); AWS-IAM-ARN principals do not resolve on MinIO."},
 		},
 	},
 
