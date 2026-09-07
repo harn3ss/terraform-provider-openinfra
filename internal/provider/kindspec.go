@@ -5,7 +5,12 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -133,13 +138,17 @@ func buildAttribute(a attr) schema.Attribute {
 	optional := !a.Required
 	computed := !a.Required && a.Default != nil
 
-	var mods []planmodifier.String
-	if a.Replaces {
-		mods = append(mods, stringplanmodifier.RequiresReplace())
-	}
-
+	// An immutable field (Replaces) must carry a RequiresReplace plan modifier of the
+	// attribute's OWN type — a []planmodifier.String only fits a StringAttribute. Earlier
+	// this built a single String modifier and dropped it on every non-string branch, so
+	// changing e.g. a bool/object immutable field planned as an in-place update the platform
+	// can't honor (a silent config lie). Each branch now attaches its own-typed modifier.
 	switch a.Type {
 	case tString:
+		var mods []planmodifier.String
+		if a.Replaces {
+			mods = append(mods, stringplanmodifier.RequiresReplace())
+		}
 		at := schema.StringAttribute{
 			Required:            a.Required,
 			Optional:            optional,
@@ -154,11 +163,16 @@ func buildAttribute(a attr) schema.Attribute {
 		return at
 
 	case tBool:
+		var mods []planmodifier.Bool
+		if a.Replaces {
+			mods = append(mods, boolplanmodifier.RequiresReplace())
+		}
 		at := schema.BoolAttribute{
 			Required:            a.Required,
 			Optional:            optional,
 			Computed:            computed,
 			MarkdownDescription: a.Description,
+			PlanModifiers:       mods,
 		}
 		if b, ok := a.Default.(bool); ok {
 			at.Default = booldefault.StaticBool(b)
@@ -166,11 +180,16 @@ func buildAttribute(a attr) schema.Attribute {
 		return at
 
 	case tInt:
+		var mods []planmodifier.Int64
+		if a.Replaces {
+			mods = append(mods, int64planmodifier.RequiresReplace())
+		}
 		at := schema.Int64Attribute{
 			Required:            a.Required,
 			Optional:            optional,
 			Computed:            computed,
 			MarkdownDescription: a.Description,
+			PlanModifiers:       mods,
 		}
 		if n, ok := a.Default.(int64); ok {
 			at.Default = int64default.StaticInt64(n)
@@ -178,43 +197,68 @@ func buildAttribute(a attr) schema.Attribute {
 		return at
 
 	case tIntList:
+		var mods []planmodifier.List
+		if a.Replaces {
+			mods = append(mods, listplanmodifier.RequiresReplace())
+		}
 		return schema.ListAttribute{
 			ElementType:         types.Int64Type,
 			Required:            a.Required,
 			Optional:            optional,
 			MarkdownDescription: a.Description,
+			PlanModifiers:       mods,
 		}
 
 	case tStringList:
+		var mods []planmodifier.List
+		if a.Replaces {
+			mods = append(mods, listplanmodifier.RequiresReplace())
+		}
 		return schema.ListAttribute{
 			ElementType:         types.StringType,
 			Required:            a.Required,
 			Optional:            optional,
 			MarkdownDescription: a.Description,
+			PlanModifiers:       mods,
 		}
 
 	case tStringMap:
+		var mods []planmodifier.Map
+		if a.Replaces {
+			mods = append(mods, mapplanmodifier.RequiresReplace())
+		}
 		return schema.MapAttribute{
 			ElementType:         types.StringType,
 			Required:            a.Required,
 			Optional:            optional,
 			MarkdownDescription: a.Description,
+			PlanModifiers:       mods,
 		}
 
 	case tObject:
+		var mods []planmodifier.Object
+		if a.Replaces {
+			mods = append(mods, objectplanmodifier.RequiresReplace())
+		}
 		return schema.SingleNestedAttribute{
 			Attributes:          buildAttributes(a.Nested),
 			Required:            a.Required,
 			Optional:            optional,
 			MarkdownDescription: a.Description,
+			PlanModifiers:       mods,
 		}
 
 	case tObjectList:
+		var mods []planmodifier.List
+		if a.Replaces {
+			mods = append(mods, listplanmodifier.RequiresReplace())
+		}
 		return schema.ListNestedAttribute{
 			NestedObject:        schema.NestedAttributeObject{Attributes: buildAttributes(a.Nested)},
 			Required:            a.Required,
 			Optional:            optional,
 			MarkdownDescription: a.Description,
+			PlanModifiers:       mods,
 		}
 	}
 	panic("unknown attr type for " + a.Name)
