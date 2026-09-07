@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	fwresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
@@ -389,5 +390,56 @@ func TestRefreshLeavesUnsetAttributesAlone(t *testing.T) {
 	}
 	if state["port"] != nil {
 		t.Errorf("adopted a server value for an absent attribute: %v", state["port"])
+	}
+}
+
+// TestImmutableAttrsRequireReplace guards the bug (polyhedron#84) where an immutable
+// (Replaces) attribute of a non-string type silently lost its RequiresReplace plan modifier:
+// buildAttribute built a single []planmodifier.String and attached it only on the tString
+// branch, so a bool/int/list/map/object immutable field changed in HCL planned as an in-place
+// update the platform can't honor — a silent config lie. Every Replaces attribute, of any type
+// and at any nesting depth, must carry a plan modifier once built.
+func TestImmutableAttrsRequireReplace(t *testing.T) {
+	var walk func(kind string, a attr)
+	walk = func(kind string, a attr) {
+		if a.Replaces {
+			if n := planModifierCount(buildAttribute(a)); n == 0 {
+				t.Errorf("%s.%s (type %d): Replaces=true but the built schema attribute carries no "+
+					"plan modifier — RequiresReplace was dropped, so an immutable change would plan as an "+
+					"in-place update", kind, a.Name, a.Type)
+			}
+		}
+		for _, n := range a.Nested {
+			walk(kind, n)
+		}
+	}
+	for _, k := range genericKinds {
+		for _, a := range k.Attrs {
+			walk(k.TypeName, a)
+		}
+	}
+}
+
+// planModifierCount returns how many plan modifiers a built schema attribute carries, across the
+// concrete attribute types buildAttribute can return. Used by TestImmutableAttrsRequireReplace to
+// prove a RequiresReplace modifier is present rather than silently dropped.
+func planModifierCount(a schema.Attribute) int {
+	switch t := a.(type) {
+	case schema.StringAttribute:
+		return len(t.PlanModifiers)
+	case schema.BoolAttribute:
+		return len(t.PlanModifiers)
+	case schema.Int64Attribute:
+		return len(t.PlanModifiers)
+	case schema.ListAttribute:
+		return len(t.PlanModifiers)
+	case schema.MapAttribute:
+		return len(t.PlanModifiers)
+	case schema.SingleNestedAttribute:
+		return len(t.PlanModifiers)
+	case schema.ListNestedAttribute:
+		return len(t.PlanModifiers)
+	default:
+		return 0
 	}
 }
