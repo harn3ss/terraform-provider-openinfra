@@ -25,6 +25,7 @@ A standalone S3-compatible object store (MinIO) — the object-storage primitive
 - `lifecycle_rules` (Attributes List) Object lifecycle (expiration) rules, applied in the background by MinIO. (see [below for nested schema](#nestedatt--lifecycle_rules))
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `object_lock` (Attributes) WORM retention (S3 Object Lock), enforced by MinIO. Set only at creation and auto-enables versioning. In COMPLIANCE mode not even an admin can delete or shorten a locked object's retention until it expires. (see [below for nested schema](#nestedatt--object_lock))
+- `policy` (String) An S3/MinIO bucket-policy JSON document applied verbatim via put-bucket-policy. Principals must be `*` (public); AWS-IAM-ARN principals do not resolve on MinIO.
 - `versioning` (Boolean) Keep prior versions of overwritten/deleted objects.
 
 ### Read-Only
