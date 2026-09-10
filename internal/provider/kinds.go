@@ -1091,6 +1091,81 @@ var genericKinds = []kindSpec{
 			{Name: "not_after", Type: tString, Description: "The CA certificate's expiry."},
 		},
 	},
+
+	{
+		TypeName: "scheduled_job", Kind: "ScheduledJob", Plural: "scheduledjobs",
+		Description: "Run an arbitrary container to completion on a schedule (the AWS scheduled task / " +
+			"EventBridge Scheduler analog) — a CronJob whose runs are Jobs, with retries, a concurrency " +
+			"policy, a per-run timeout, and retained history. `schedule` accepts a 5-field cron or an " +
+			"AWS-style rate()/cron() expression.",
+		Attrs: []attr{
+			{Name: "schedule", Type: tString, Required: true,
+				Description: "When to run: a 5-field cron, or an AWS rate(...)/cron(...) expression."},
+			{Name: "time_zone", Type: tString, Description: "IANA time zone (requires k8s >= 1.27; omitted = UTC)."},
+			{Name: "suspend", Type: tBool, Default: false, Description: "Pause the schedule without deleting it."},
+			{Name: "concurrency_policy", Type: tString, Default: "Forbid",
+				Description: "If a run is still going when the next is due: Forbid, Allow, or Replace."},
+			{Name: "starting_deadline", Type: tInt, Description: "Seconds a missed run may still start late (catch-up window)."},
+			{Name: "successful_jobs_history_limit", Type: tInt, Default: int64(3), Description: "Completed runs to retain."},
+			{Name: "failed_jobs_history_limit", Type: tInt, Default: int64(3), Description: "Failed runs to retain."},
+			{Name: "image", Type: tString, Required: true, Description: "Container image to run each fire."},
+			{Name: "command", Type: tStringList, Description: "Entrypoint override."},
+			{Name: "args", Type: tStringList, Description: "Arguments to the entrypoint."},
+			{Name: "env", Type: tObjectList, Nested: []attr{
+				{Name: "name", Type: tString, Required: true},
+				{Name: "value", Type: tString},
+			}, Description: "Plain environment variables."},
+			{Name: "secrets", Type: tStringList, Description: "Existing Secrets whose keys are injected as env (envFrom)."},
+			{Name: "queues", Type: tStringList, Description: "kind: Queue names to publish to (NATS_URL + OPENINFRA_QUEUES injected)."},
+			{Name: "retries", Type: tInt, Default: int64(2), Description: "Retries before a run is marked failed (Job backoffLimit)."},
+			{Name: "timeout", Type: tInt, Description: "Hard per-run wall-clock cap in seconds (Job activeDeadlineSeconds)."},
+			{Name: "cpu", Type: tString, Description: "CPU limit (Kubernetes quantity). Default 1."},
+			{Name: "memory", Type: tString, Description: "Memory limit (Kubernetes quantity). Default 512Mi."},
+			{Name: "gpu", Type: tInt, Default: int64(0), Description: "GPUs to request. 0 (default) runs CPU-only."},
+			{Name: "gpu_tier", Type: tString, Default: "smallgpu", Description: "GPU class when gpu>0: smallgpu or largegpu."},
+		},
+		Status: []statusAttr{{Name: "cron_job", Type: tString, Description: "The composed CronJob's name."}},
+	},
+
+	{
+		TypeName: "auto_scaling_group", Kind: "AutoScalingGroup", Plural: "autoscalinggroups",
+		Description: "A self-healing group of identical VMs kept at a desired capacity (the EC2 Auto " +
+			"Scaling Group analog) — a KubeVirt VirtualMachinePool. `launch_template` is the per-member " +
+			"machine (the openinfra_virtual_machine shape). v1 = capacity + health-based replacement + " +
+			"rolling instance refresh.",
+		Attrs: []attr{
+			{Name: "min_size", Type: tInt, Default: int64(1), Description: "Fewest members to keep running."},
+			{Name: "max_size", Type: tInt, Description: "Most members allowed. Omit for no ceiling; when set, desired_capacity is capped to it."},
+			{Name: "desired_capacity", Type: tInt, Description: "Members to run now (pool replicas). Defaults to min_size."},
+			{Name: "launch_template", Type: tObject, Required: true, Nested: []attr{
+				{Name: "os", Type: tString, Required: true, Description: "OS from the curated catalog (as openinfra_virtual_machine)."},
+				{Name: "cpu", Type: tInt, Description: "vCPU cores per member (default 2)."},
+				{Name: "memory", Type: tString, Description: "Guest RAM per member (default 2Gi)."},
+				{Name: "disk_size", Type: tString, Description: "Per-member root disk size (default 20Gi)."},
+				{Name: "ssh_key", Type: tString, Description: "SSH public key injected via cloud-init (Linux)."},
+				{Name: "user_data", Type: tString, Description: "First-boot user data (EC2 UserData equivalent, Linux)."},
+				{Name: "network", Type: tString, Description: "Per-member network: masquerade (default) or macvtap."},
+				{Name: "security_groups", Type: tStringList, Description: "SecurityGroups applied to every member."},
+				{Name: "subnet", Type: tString, Description: "kind: Subnet (kube-ovn) placement."},
+				{Name: "high_availability", Type: tBool, Description: "Longhorn per-member root + live migration (default false)."},
+				{Name: "cpu_model", Type: tString, Description: "Guest CPU model to require (KubeVirt domain.cpu.model)."},
+			}, Description: "The recipe for one member machine (an EC2 launch template)."},
+			{Name: "health_check", Type: tObject, Nested: []attr{
+				{Name: "replace_unhealthy", Type: tBool, Description: "Replace a member whose VM stops being ready (default true)."},
+				{Name: "start_up_failure_threshold", Type: tInt, Description: "Consecutive start failures before replacement (pool default 3)."},
+				{Name: "min_failing_duration", Type: tString, Description: "How long a member must be failing before replacement (pool default 5m)."},
+			}, Description: "How unhealthy members are detected and replaced."},
+			{Name: "instance_refresh", Type: tObject, Nested: []attr{
+				{Name: "strategy", Type: tString, Description: "How a template change reaches members: proactive (default, rolling restart) or opportunistic."},
+				{Name: "max_unavailable", Type: tString, Description: "Members unavailable at once during a proactive refresh (an integer or \"25%\"; default \"1\")."},
+			}, Description: "How a launch_template change is rolled out to existing members."},
+		},
+		Status: []statusAttr{
+			{Name: "pool_name", Type: tString, Description: "The composed VirtualMachinePool's name."},
+			{Name: "resolved_capacity", Path: []string{"desiredCapacity"}, Type: tInt, Description: "The resolved desired capacity (replicas)."},
+			{Name: "ready_replicas", Type: tInt, Description: "Members currently ready."},
+		},
+	},
 }
 
 // connDBFields is the database-connection half of a DataFlow node. Separate from
