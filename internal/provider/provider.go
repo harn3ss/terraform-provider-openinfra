@@ -141,6 +141,8 @@ var crdKinds = []struct{ typeName, plural, kind string }{
 	{"virtual_machine", "virtualmachines", "VirtualMachine"},
 	{"vm_image", "vmimages", "VmImage"},
 	{"volume", "volumes", "Volume"},
+	{"scheduled_job", "scheduledjobs", "ScheduledJob"},
+	{"auto_scaling_group", "autoscalinggroups", "AutoScalingGroup"},
 }
 
 func (p *openinfraProvider) DataSources(context.Context) []func() datasource.DataSource {
