@@ -818,6 +818,23 @@ var genericKinds = []kindSpec{
 	},
 
 	{
+		TypeName: "identity_provider", Kind: "IdentityProvider", Plural: "identityproviders",
+		Description: "An external OIDC identity provider the platform trusts for " +
+			"sts:AssumeRoleWithWebIdentity — the AWS \"Identity providers\" registry. Register an issuer + " +
+			"audiences; a Role whose trust names `OIDC::<name>` may then be assumed by that issuer's tokens. " +
+			"The counterpart to `kind: UserPool` (which issues tokens); register a UserPool's issuer here to " +
+			"close the loop. OIDC only (SAML deferred).",
+		Attrs: []attr{
+			{Name: "issuer_url", Path: []string{"issuerURL"}, Type: tString, Required: true,
+				Description: "The OIDC issuer URL (the token's `iss` claim); its discovery document + JWKS verify token signatures."},
+			{Name: "audiences", Type: tStringList, Required: true,
+				Description: "Accepted token audiences (the `aud` claim / client IDs). A token is trusted only if its aud is listed; unaudienced tokens are refused."},
+			{Name: "subject_claim", Type: tString, Default: "sub",
+				Description: "The token claim used as the assumed subject (and matched by a role's trust policy). Defaults to `sub`."},
+		},
+	},
+
+	{
 		TypeName: "static_site", Kind: "StaticSite", Plural: "staticsites",
 		Description: "Static frontend hosting for a built SPA — the S3-static-website + CDN-origin-shaped " +
 			"primitive. Provisions a MinIO bucket (upload your dist/ via the emitted `<name>-minio` secret) " +
