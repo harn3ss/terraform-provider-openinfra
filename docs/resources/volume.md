@@ -25,6 +25,7 @@ A block volume you can attach to a virtual machine — the EBS-shaped primitive.
 - `encrypted` (Boolean) Encrypt the volume at rest with LUKS (the `longhorn-encrypted` class). The per-volume passphrase is a Vault Transit data key wrapped by `encryption_key`, so destroying that `openinfra_encryption_key` crypto-erases the volume. Requires the opt-in encryption component and `encryption_key`. Set at creation, so changing it replaces the volume.
 - `encryption_key` (String) Name of the `kind: EncryptionKey` (a Vault Transit KEK) that protects an encrypted volume. Required when `encrypted` is true; ignored otherwise.
 - `migratable` (Boolean) RWX block on the `longhorn-migratable` class, so the volume can attach to a live-migratable (`high_availability`) VM without blocking migration. `false` is RWO. The access mode is fixed at creation, so changing this replaces the volume.
+- `mode` (String) Volume mode: `Block` (default) exposes a raw device for KubeVirt VM hotplug (the volume's primary use); `Filesystem` exposes a mountable filesystem for giving a stateful `openinfra_application` durable storage. Set at creation, so changing it replaces the volume.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `source` (Attributes) Restore a new volume from a snapshot. Only meaningful at creation. (see [below for nested schema](#nestedatt--source))
 
