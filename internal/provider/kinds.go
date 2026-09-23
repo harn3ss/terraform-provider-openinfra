@@ -294,6 +294,10 @@ var genericKinds = []kindSpec{
 			"Backed by Longhorn.",
 		Attrs: []attr{
 			{Name: "size", Type: tString, Required: true, Description: "e.g. `50Gi`. Expandable later."},
+			{Name: "mode", Type: tString, Default: "Block", Replaces: true,
+				Description: "Volume mode: `Block` (default) exposes a raw device for KubeVirt VM hotplug (the " +
+					"volume's primary use); `Filesystem` exposes a mountable filesystem for giving a stateful " +
+					"`openinfra_application` durable storage. Set at creation, so changing it replaces the volume."},
 			{Name: "migratable", Type: tBool, Default: false, Replaces: true,
 				Description: "RWX block on the `longhorn-migratable` class, so the volume can attach to a " +
 					"live-migratable (`high_availability`) VM without blocking migration. `false` is RWO. " +
