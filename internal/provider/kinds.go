@@ -69,8 +69,22 @@ var genericKinds = []kindSpec{
 		Description: "A serverless function — a container that scales to zero between requests. " +
 			"Compiles to a Knative Service.",
 		Attrs: []attr{
-			{Name: "image", Type: tString, Required: true,
-				Description: "Container image serving HTTP."},
+			{Name: "image", Type: tString,
+				Description: "Container image serving HTTP. Use this OR code."},
+			{Name: "code", Type: tObject,
+				Description: "Run handler code on a managed runtime base image instead of a BYO container (the Lambda Zip+handler model). Use this OR image.",
+				Nested: []attr{
+					{Name: "runtime", Type: tString, Required: true, Description: "Managed runtime for the handler. v1: python3.12."},
+					{Name: "handler", Type: tString, Required: true, Description: "Entrypoint <module>.<function>, e.g. app.handler."},
+					{Name: "source", Type: tObject,
+						Description: "Where the handler code lives — configMap (inline) or bucket+key (zip).",
+						Nested: []attr{
+							{Name: "config_map", Type: tString, Description: "ConfigMap whose keys are the handler source files (mounted at /var/task)."},
+							{Name: "bucket", Type: tString, Description: "Bucket holding the code .zip (fetched + unzipped at startup)."},
+							{Name: "key", Type: tString, Description: "Object key of the .zip within the bucket."},
+							{Name: "secret", Type: tString, Description: "Secret carrying S3 creds for the bucket."},
+						}},
+				}},
 			{Name: "port", Type: tInt, Default: int64(8080), Description: "Port the container listens on."},
 			{Name: "gpu", Type: tInt, Default: int64(0),
 				Description: "GPUs per instance, for serverless inference. `0` is CPU-only."},
