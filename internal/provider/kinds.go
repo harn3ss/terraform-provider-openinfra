@@ -119,6 +119,7 @@ var genericKinds = []kindSpec{
 			{Name: "type", Type: tString, Default: "Standard",
 				Description: "Workflow class. One of: `Standard`. Only Standard (durable, checkpointed) is " +
 					"implemented; Express is planned."},
+			{Name: "role_arn", Type: tString, Description: "Optional execution role, the analogue of aws_sfn_state_machine.role_arn. An arn:aws:iam::<acct>:role/<name> or a bare kind: Role name; when set, StartExecution mints a temporary STS session for it and the engine runs every Task under it."},
 		},
 		Status: []statusAttr{{Name: "controller", Type: tString,
 			Description: "The controller running this state machine's executions."}},
@@ -771,6 +772,11 @@ var genericKinds = []kindSpec{
 			{Name: "acquire_timeout_ms", Type: tInt,
 				Description: "How long a client waits for a backend at the cap before failing. Defaults to `10000`."},
 			{Name: "replicas", Type: tInt, Description: "Proxy Deployment replicas. Defaults to `1`."},
+			{Name: "transaction_multiplexing", Type: tBool,
+				Description: "Multiplex clients onto fewer backend connections at transaction granularity " +
+					"(the RDS-Proxy-style `-tx-multiplex` path). Off by default (connection-level reuse); on, " +
+					"autocommit statements release the backend per-transaction and unsharable state pins to a " +
+					"dedicated backend. Defaults to `false`."},
 			{Name: "tls", Type: tObject,
 				Description: "Terminate client TLS at the proxy (`encrypt=on` / `strict`, the modes JDBC/ODBC/" +
 					".NET default to). Off unless `terminate` is set; the backend connection stays plaintext.",
