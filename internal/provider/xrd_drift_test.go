@@ -82,6 +82,7 @@ func TestKindsMatchXRDs(t *testing.T) {
 		"database.memory":         true, // as above
 		"database.size":           true, // storage size; the curated resource uses the engine default, set via kubectl/GitOps
 		"database.readerEndpoint": true, // Aurora reader endpoint; set on the CR/GitOps, not in the curated HCL resource
+		"database.replicas":       true, // Aurora replica-count knob; set on the CR/GitOps, not in the curated HCL resource
 	}
 
 	var problems []string
