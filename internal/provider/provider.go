@@ -130,6 +130,7 @@ var crdKinds = []struct{ typeName, plural, kind string }{
 	{"replication", "replications", "Replication"},
 	{"security_group", "securitygroups", "SecurityGroup"},
 	{"vpc", "vpcs", "Vpc"},
+	{"vpc_endpoint", "vpcendpoints", "VpcEndpoint"},
 	{"subnet", "subnets", "Subnet"},
 	{"nat_gateway", "natgateways", "NatGateway"},
 	{"elastic_ip", "elasticips", "ElasticIp"},
