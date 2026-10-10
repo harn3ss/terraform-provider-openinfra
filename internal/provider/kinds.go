@@ -84,6 +84,12 @@ var genericKinds = []kindSpec{
 							{Name: "key", Type: tString, Description: "Object key of the .zip within the bucket."},
 							{Name: "secret", Type: tString, Description: "Secret carrying S3 creds for the bucket."},
 						}},
+					{Name: "layers", Type: tObjectList,
+						Description: "Lambda layers: .zip artifacts extracted (merged, in order) into /opt at startup so the handler can import shared code/deps they provide. Fetched with the same S3 creds as `source.secret`, so layers require a bucket source.",
+						Nested: []attr{
+							{Name: "bucket", Type: tString, Required: true, Description: "Bucket holding the layer .zip."},
+							{Name: "key", Type: tString, Required: true, Description: "Object key of the layer .zip."},
+						}},
 				}},
 			{Name: "port", Type: tInt, Default: int64(8080), Description: "Port the container listens on."},
 			{Name: "gpu", Type: tInt, Default: int64(0),
