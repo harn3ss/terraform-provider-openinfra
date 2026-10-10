@@ -389,6 +389,11 @@ var genericKinds = []kindSpec{
 							{Name: "type", Type: tString, Required: true, Description: "Scalar key type: `S`, `N`, or `B`."},
 						}},
 				}},
+			{Name: "stream_specification", Type: tObject,
+				Description: "DynamoDB Streams — emit an ordered change record (INSERT/MODIFY/REMOVE) for every item write, readable via the `dynamodbstreams` API. Off unless set.",
+				Nested: []attr{
+					{Name: "stream_view_type", Type: tString, Required: true, Description: "What each change record carries: `KEYS_ONLY`, `NEW_IMAGE`, `OLD_IMAGE`, or `NEW_AND_OLD_IMAGES`."},
+				}},
 		},
 	},
 
