@@ -1028,6 +1028,8 @@ var genericKinds = []kindSpec{
 				{Name: "path", Type: tString, Required: true, Description: "URL path to match, e.g. `/` or `/users`."},
 				{Name: "path_type", Type: tString, Description: "`Prefix` (default), `Exact`, or `ImplementationSpecific`."},
 				{Name: "methods", Type: tStringList, Description: "HTTP methods this route accepts (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS). Omit to accept all."},
+				{Name: "required_headers", Type: tStringList, Description: "Request validation: header names that must be present (any value) — a request missing any doesn't match this route, so it never reaches the backend. Body-schema (model) validation is plugin-gated."},
+				{Name: "required_query_params", Type: tStringList, Description: "Request validation: query-parameter names that must be present (any value)."},
 				{Name: "backend", Type: tObject, Nested: []attr{
 					{Name: "kind", Type: tString, Description: "For an in-cluster backend: `Function` (default) or `Application`."},
 					{Name: "name", Type: tString, Description: "In-cluster backend: name of the backing Function/Application (same namespace). Set exactly one of `name` or `url`."},
