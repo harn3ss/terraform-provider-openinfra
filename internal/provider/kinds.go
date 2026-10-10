@@ -105,6 +105,8 @@ var genericKinds = []kindSpec{
 				{Name: "max", Type: tInt, Description: "Defaults to `10`."},
 				{Name: "target", Type: tInt, Description: "Target concurrent requests per pod. Defaults to `100`."},
 			}},
+			{Name: "reserved_concurrency", Type: tInt,
+				Description: "The AWS Lambda reserved-concurrency analog: a HARD cap on concurrent requests. When set, the function runs one request per instance with at most this many instances (overriding `scaling.max`/`target`; `scaling.min` still sets the warm floor). Unset means request-driven scaling applies."},
 			{Name: "queues", Type: tStringList,
 				Description: "Queues this function works with. Injects `NATS_URL` and `OPENINFRA_QUEUES`."},
 			{Name: "env", Type: tObjectList, Nested: []attr{
