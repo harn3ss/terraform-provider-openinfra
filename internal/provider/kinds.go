@@ -379,6 +379,16 @@ var genericKinds = []kindSpec{
 							{Name: "type", Type: tString, Required: true, Description: "Scalar key type: `S`, `N`, or `B`."},
 						}},
 				}},
+			{Name: "local_secondary_indexes", Type: tObjectList,
+				Description: "Local secondary indexes — query by an alternate sort key under the SAME partition key. Declared at table creation (immutable); requires the table to have a `range_key`. Each is backed by a real Mongo index on (table hash key, this range key); projection is effectively ALL.",
+				Nested: []attr{
+					{Name: "name", Type: tString, Required: true, Description: "Index name — the Query IndexName."},
+					{Name: "range_key", Type: tObject, Required: true, Description: "The index's sort key (the partition key is the table's hash key).",
+						Nested: []attr{
+							{Name: "name", Type: tString, Required: true, Description: "Attribute name of the index sort key."},
+							{Name: "type", Type: tString, Required: true, Description: "Scalar key type: `S`, `N`, or `B`."},
+						}},
+				}},
 		},
 	},
 
