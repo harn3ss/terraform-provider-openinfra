@@ -58,6 +58,9 @@ func TestKindsMatchXRDs(t *testing.T) {
 		"virtual_machine.securityGroups":    true, // list; SG attach not yet in HCL
 		"virtual_machine.sshKey":            true,
 
+		// --- bespoke: HttpApi ---
+		"HttpApi.routes.requestModel": true, // API Gateway request-validation Model (freeform JSON Schema); set on the CR/GitOps, not the curated HCL
+
 		// --- bespoke: application (flat curated app resource) ---
 		"application.database":       true, // a data-only Application is the `openinfra_database` resource
 		"application.domain":         true,
