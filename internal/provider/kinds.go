@@ -997,9 +997,10 @@ var genericKinds = []kindSpec{
 				{Name: "path_type", Type: tString, Description: "`Prefix` (default), `Exact`, or `ImplementationSpecific`."},
 				{Name: "methods", Type: tStringList, Description: "HTTP methods this route accepts (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS). Omit to accept all."},
 				{Name: "backend", Type: tObject, Nested: []attr{
-					{Name: "kind", Type: tString, Description: "`Function` (default) or `Application`."},
-					{Name: "name", Type: tString, Required: true, Description: "Name of the backing Function/Application (same namespace)."},
+					{Name: "kind", Type: tString, Description: "For an in-cluster backend: `Function` (default) or `Application`."},
+					{Name: "name", Type: tString, Description: "In-cluster backend: name of the backing Function/Application (same namespace). Set exactly one of `name` or `url`."},
 					{Name: "port", Type: tInt, Description: "Backend Service port. Defaults to `80`."},
+					{Name: "url", Type: tString, Description: "External backend origin (the API Gateway HTTP_PROXY integration): `http(s)://host[:port]`. The matched request path is forwarded as-is and the Host header is set to the origin host. Mutually exclusive with `name`."},
 				}},
 			}},
 		},
