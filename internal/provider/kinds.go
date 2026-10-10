@@ -569,6 +569,16 @@ var genericKinds = []kindSpec{
 		Status: []statusAttr{{Name: "allocated_address", Path: []string{"address"}, Type: tString, Description: "The allocated public IP (when address is auto-assigned)."}},
 	},
 	{
+		TypeName: "vpc_endpoint", Kind: "VpcEndpoint", Plural: "vpcendpoints",
+		Description: "A private, in-VPC entry point to an AWS service (the AWS VPC endpoint analog): a stable DNS alias to the aws-shim front door that a workload uses as its AWS endpoint URL. All services route to the shim; `service`/`vpc_endpoint_type` are carried for fidelity (CFN round-trip). Requires the kube-ovn CNI + the aws-shim.",
+		Attrs: []attr{
+			{Name: "service", Type: tString, Required: true, Description: "AWS service the endpoint fronts (s3, dynamodb, sqs, sns, kms, …). Selects the endpoint's purpose; all route to the aws-shim."},
+			{Name: "vpc_endpoint_type", Type: tString, Default: "Interface", Description: "AWS endpoint type — `Interface` (PrivateLink, default) or `Gateway` (S3/DynamoDB in AWS). Fidelity; both route to the shim here."},
+			{Name: "vpc", Type: tString, Description: "The kind: Vpc this endpoint serves (fidelity / owning VPC). The alias is created in the claim's namespace."},
+		},
+		Status: []statusAttr{{Name: "dns_name", Type: tString, Description: "The in-cluster DNS name to set as the AWS endpoint URL for this service."}},
+	},
+	{
 		TypeName: "transit_gateway", Kind: "TransitGateway", Plural: "transitgateways",
 		Description: "A hub for many kind: Vpc spokes giving transitive routing (a subnet-less kube-ovn hub Vpc) — the AWS Transit Gateway. Each spoke is also wired on its own kind: Vpc. Requires the kube-ovn CNI.",
 		Attrs: []attr{
