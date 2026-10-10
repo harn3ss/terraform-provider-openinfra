@@ -960,7 +960,11 @@ var genericKinds = []kindSpec{
 			"to a Traefik IngressRoute with cert-manager TLS.",
 		Attrs: []attr{
 			{Name: "domain", Type: tString, Required: true,
-				Description: "Hostname the API is served on, e.g. `api.example.com`."},
+				Description: "Primary hostname the API is served on, e.g. `api.example.com`."},
+			{Name: "domains", Type: tStringList,
+				Description: "Additional hostnames this API answers on (the custom-domains equivalent) — added to the route Host match and the TLS certificate SANs alongside `domain`."},
+			{Name: "base_path", Type: tString,
+				Description: "Optional base path the whole API is mounted under (the base-path-mapping equivalent), e.g. `/v1`. Routes match under this prefix and it is stripped before the backend."},
 			{Name: "tls", Type: tBool, Default: true,
 				Description: "Terminate TLS via cert-manager. Set false for plain HTTP."},
 			{Name: "waf", Type: tBool, Default: false,
