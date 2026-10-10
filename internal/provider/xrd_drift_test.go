@@ -61,6 +61,18 @@ func TestKindsMatchXRDs(t *testing.T) {
 		// --- bespoke: HttpApi ---
 		"HttpApi.routes.requestModel": true, // API Gateway request-validation Model (freeform JSON Schema); set on the CR/GitOps, not the curated HCL
 
+		// --- bespoke: StaticSite ---
+		// Amplify-style managed build (repo/build/publish) — set on the CR/GitOps, not the curated HCL.
+		"StaticSite.build.repo":         true,
+		"StaticSite.build.branch":       true,
+		"StaticSite.build.buildCommand": true,
+		"StaticSite.build.outputDir":    true,
+		"StaticSite.build.image":        true,
+		"StaticSite.build.pollSeconds":  true,
+		"StaticSite.build.secret":       true,
+		"StaticSite.build.env.name":     true,
+		"StaticSite.build.env.value":    true,
+
 		// --- bespoke: application (flat curated app resource) ---
 		"application.database":       true, // a data-only Application is the `openinfra_database` resource
 		"application.domain":         true,
