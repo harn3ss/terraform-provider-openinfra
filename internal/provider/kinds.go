@@ -121,6 +121,13 @@ var genericKinds = []kindSpec{
 					{Name: "stream", Type: tString, Description: "Stream name to consume."},
 					{Name: "subject", Type: tString, Description: "Subject filter. Defaults to `cdc.<stream>.>`."},
 				}},
+			{Name: "aliases", Type: tObjectList,
+				Description: "Weighted traffic targets (the Lambda alias/version analog): each routes a percent of traffic to a pinned revision or the latest, addressable at `<name>-<function>`. Weights must sum to 100. Maps to the Knative traffic block (canary / blue-green).",
+				Nested: []attr{
+					{Name: "name", Type: tString, Required: true, Description: "Alias name — also a Knative traffic tag."},
+					{Name: "revision", Type: tString, Description: "`latest` (default) or a specific Knative revision name (a pinned version)."},
+					{Name: "weight", Type: tInt, Required: true, Description: "Percent of traffic to this target; all weights must sum to 100."},
+				}},
 		},
 		Status: []statusAttr{{Name: "url", Type: tString, Description: "The function's HTTP endpoint."}},
 	},
