@@ -74,7 +74,7 @@ var genericKinds = []kindSpec{
 			{Name: "code", Type: tObject,
 				Description: "Run handler code on a managed runtime base image instead of a BYO container (the Lambda Zip+handler model). Use this OR image.",
 				Nested: []attr{
-					{Name: "runtime", Type: tString, Required: true, Description: "Managed runtime for the handler. v1: python3.12."},
+					{Name: "runtime", Type: tString, Required: true, Description: "Managed runtime base image for the handler: python3.12 or nodejs20."},
 					{Name: "handler", Type: tString, Required: true, Description: "Entrypoint <module>.<function>, e.g. app.handler."},
 					{Name: "source", Type: tObject,
 						Description: "Where the handler code lives — configMap (inline) or bucket+key (zip).",
