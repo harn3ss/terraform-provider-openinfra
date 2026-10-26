@@ -91,13 +91,13 @@ func TestKindsMatchXRDs(t *testing.T) {
 		"application.volumeMounts":   true, // as above (mounts for the primary container)
 
 		// --- bespoke: database (maps to Application spec.database) ---
-		"database.name":           true, // exposed as `database_name` (metadata name is the Application name)
-		"database.vector":         true, // pgvector toggle not yet in HCL
-		"database.cpu":            true, // instance sizing; the curated resource uses engine defaults, tune via kubectl/GitOps
-		"database.memory":         true, // as above
-		"database.size":           true, // storage size; the curated resource uses the engine default, set via kubectl/GitOps
-		"database.readerEndpoint": true, // Aurora reader endpoint; set on the CR/GitOps, not in the curated HCL resource
-		"database.replicas":     true, // Aurora replica-count knob; set on the CR/GitOps, not in the curated HCL resource
+		"database.name":                true, // exposed as `database_name` (metadata name is the Application name)
+		"database.vector":              true, // pgvector toggle not yet in HCL
+		"database.cpu":                 true, // instance sizing; the curated resource uses engine defaults, tune via kubectl/GitOps
+		"database.memory":              true, // as above
+		"database.size":                true, // storage size; the curated resource uses the engine default, set via kubectl/GitOps
+		"database.readerEndpoint":      true, // Aurora reader endpoint; set on the CR/GitOps, not in the curated HCL resource
+		"database.replicas":            true, // Aurora replica-count knob; set on the CR/GitOps, not in the curated HCL resource
 		"database.autoscaling":         true, // Aurora replica autoscaling (KEDA ScaledObject); set on the CR/GitOps, not in the curated HCL resource
 		"database.pointInTimeRecovery": true, // Aurora Backtrack / RDS PITR (WAL archiving); set on the CR/GitOps, not in the curated HCL resource
 		"database.backtrackWindow":     true, // PITR retention window; as above
