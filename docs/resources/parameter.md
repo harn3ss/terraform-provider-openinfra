@@ -19,7 +19,6 @@ A hierarchical, optionally-encrypted parameter — the AWS SSM Parameter Store-s
 
 - `name` (String) Resource name. Changing it replaces the resource.
 - `path` (String) Hierarchical path, e.g. `/app/db/host`. Flattened to an env key (upper-case, `/` and `-` -> `_`) in the namespace Secret.
-- `value` (String) The parameter value. A SecureString is held encrypted in Vault and delivered via the namespace Secret.
 
 ### Optional
 
@@ -27,6 +26,7 @@ A hierarchical, optionally-encrypted parameter — the AWS SSM Parameter Store-s
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `tier` (String) `Standard` or `Advanced` (metadata, mirrors SSM tiers).
 - `type` (String) `String` (plain) or `SecureString` (sensitive).
+- `value` (String, Sensitive) The parameter value, held encrypted in Vault and delivered via the namespace Secret. OPTIONAL — omit it for a value-by-reference parameter (declare the path with no value here and populate it out-of-band into Vault); the value then never travels through Terraform state or a manifest. The AWS SSM model.
 
 ### Read-Only
 

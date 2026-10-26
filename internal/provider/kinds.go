@@ -954,7 +954,7 @@ var genericKinds = []kindSpec{
 			"via envFrom. Rides the opt-in `encryption` component.",
 		Attrs: []attr{
 			{Name: "path", Type: tString, Required: true, Description: "Hierarchical path, e.g. `/app/db/host`. Flattened to an env key (upper-case, `/` and `-` -> `_`) in the namespace Secret."},
-			{Name: "value", Type: tString, Required: true, Description: "The parameter value. A SecureString is held encrypted in Vault and delivered via the namespace Secret."},
+			{Name: "value", Type: tString, Sensitive: true, Description: "The parameter value, held encrypted in Vault and delivered via the namespace Secret. OPTIONAL — omit it for a value-by-reference parameter (declare the path with no value here and populate it out-of-band into Vault); the value then never travels through Terraform state or a manifest. The AWS SSM model."},
 			{Name: "type", Type: tString, Default: "String", Description: "`String` (plain) or `SecureString` (sensitive)."},
 			{Name: "tier", Type: tString, Default: "Standard", Description: "`Standard` or `Advanced` (metadata, mirrors SSM tiers)."},
 			{Name: "expires_at", Type: tString, Description: "Optional RFC-3339 expiry (SSM Parameter expiration policy); a reaper deletes the parameter after this time."},
