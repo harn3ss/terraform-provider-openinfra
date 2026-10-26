@@ -30,6 +30,8 @@ type databaseModel struct {
 	Name             types.String `tfsdk:"name"`
 	Namespace        types.String `tfsdk:"namespace"`
 	Engine           types.String `tfsdk:"engine"`
+	Edition          types.String `tfsdk:"edition"`
+	AcceptEula       types.Bool   `tfsdk:"accept_eula"`
 	DatabaseName     types.String `tfsdk:"database_name"`
 	HighAvailability types.Bool   `tfsdk:"high_availability"`
 	Expose           types.Bool   `tfsdk:"expose"`
@@ -63,9 +65,22 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"engine": schema.StringAttribute{
 				Required: true,
-				MarkdownDescription: "One of `postgres`, `mysql`, `mongo`, `babelfish`. Changing the engine " +
-					"replaces the database — the storage layout differs per engine.",
+				MarkdownDescription: "One of `postgres`, `mysql`, `mongo`, `babelfish`, `sqlserver`. Changing the engine " +
+					"replaces the database — the storage layout differs per engine. `sqlserver` is REAL Microsoft " +
+					"SQL Server and is opt-in: it requires `accept_eula = true`.",
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()},
+			},
+			"edition": schema.StringAttribute{
+				Optional: true,
+				MarkdownDescription: "`sqlserver` only: SQL Server edition (MSSQL_PID) — `Developer` (free, " +
+					"non-production; the engine default), `Evaluation` (180-day), or `Express` (free, 10GB/database cap). " +
+					"Production needs a licensed edition (BYOL).",
+			},
+			"accept_eula": schema.BoolAttribute{
+				Optional: true,
+				MarkdownDescription: "`sqlserver` only: set `true` to accept Microsoft's SQL Server EULA. REQUIRED " +
+					"for `engine = sqlserver` — the engine fails closed and provisions nothing until you do. " +
+					"open-infra never accepts it for you.",
 			},
 			"database_name": schema.StringAttribute{
 				Optional:            true,
@@ -136,6 +151,12 @@ func (m databaseModel) manifest() map[string]any {
 		name = m.Name.ValueString()
 	}
 	db["name"] = name
+	if !m.Edition.IsNull() && m.Edition.ValueString() != "" {
+		db["edition"] = m.Edition.ValueString()
+	}
+	if !m.AcceptEula.IsNull() {
+		db["acceptEula"] = m.AcceptEula.ValueBool()
+	}
 	if !m.HighAvailability.IsNull() {
 		db["highAvailability"] = m.HighAvailability.ValueBool()
 	}
@@ -176,6 +197,8 @@ func connectionSecretName(engine, name string) string {
 		return name + "-mongo-app"
 	case "babelfish":
 		return name + "-babelfish"
+	case "sqlserver":
+		return name + "-sqlserver"
 	default:
 		return ""
 	}

@@ -17,14 +17,16 @@ An API-Gateway-style HTTP front door: a hostname with path (and optional per-met
 
 ### Required
 
-- `domain` (String) Hostname the API is served on, e.g. `api.example.com`.
+- `domain` (String) Primary hostname the API is served on, e.g. `api.example.com`.
 - `name` (String) Resource name. Changing it replaces the resource.
 - `routes` (Attributes List) (see [below for nested schema](#nestedatt--routes))
 
 ### Optional
 
 - `authorizer` (Attributes) A JWT authorizer: validate a Bearer OIDC token against an issuer's JWKS before a request reaches a backend (pair with an `openinfra_user_pool` as the issuer). Requires a JWT Traefik plugin enabled on the cluster. Off unless set. (see [below for nested schema](#nestedatt--authorizer))
+- `base_path` (String) Optional base path the whole API is mounted under (the base-path-mapping equivalent), e.g. `/v1`. Routes match under this prefix and it is stripped before the backend.
 - `cors` (Attributes) Enable CORS (a Traefik headers middleware). Presence turns it on; fields default sensibly. (see [below for nested schema](#nestedatt--cors))
+- `domains` (List of String) Additional hostnames this API answers on (the custom-domains equivalent) — added to the route Host match and the TLS certificate SANs alongside `domain`.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `rate_limit` (Attributes) Throttle requests (a Traefik rateLimit middleware). Presence turns it on. (see [below for nested schema](#nestedatt--rate_limit))
 - `tls` (Boolean) Terminate TLS via cert-manager. Set false for plain HTTP.
@@ -48,18 +50,18 @@ Optional:
 - `backend` (Attributes) (see [below for nested schema](#nestedatt--routes--backend))
 - `methods` (List of String) HTTP methods this route accepts (GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS). Omit to accept all.
 - `path_type` (String) `Prefix` (default), `Exact`, or `ImplementationSpecific`.
+- `required_headers` (List of String) Request validation: header names that must be present (any value) — a request missing any doesn't match this route, so it never reaches the backend. Body-schema (model) validation is plugin-gated.
+- `required_query_params` (List of String) Request validation: query-parameter names that must be present (any value).
 
 <a id="nestedatt--routes--backend"></a>
 ### Nested Schema for `routes.backend`
 
-Required:
-
-- `name` (String) Name of the backing Function/Application (same namespace).
-
 Optional:
 
-- `kind` (String) `Function` (default) or `Application`.
+- `kind` (String) For an in-cluster backend: `Function` (default) or `Application`.
+- `name` (String) In-cluster backend: name of the backing Function/Application (same namespace). Set exactly one of `name` or `url`.
 - `port` (Number) Backend Service port. Defaults to `80`.
+- `url` (String) External backend origin (the API Gateway HTTP_PROXY integration): `http(s)://host[:port]`. The matched request path is forwarded as-is and the Host header is set to the origin host. Mutually exclusive with `name`.
 
 
 

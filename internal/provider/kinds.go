@@ -65,6 +65,36 @@ func securityRule(direction, endpointName, endpointDesc string) attr {
 // implementations.
 var genericKinds = []kindSpec{
 	{
+		TypeName: "backup_vault", Kind: "BackupVault", Plural: "backupvaults",
+		Description: "A backup destination — where backups are stored. Binds a Velero BackupStorageLocation.",
+		Attrs: []attr{
+			{Name: "description", Type: tString, Description: "Human-readable purpose of this vault (e.g. \"production database backups\")."},
+		},
+		Status: []statusAttr{
+			{Name: "backup_storage_location", Type: tString, Description: "The Velero BackupStorageLocation this vault binds to."},
+		},
+	},
+	{
+		TypeName: "backup_plan", Kind: "BackupPlan", Plural: "backupplans",
+		Description: "A backup schedule — one or more rules, each a cron schedule writing to a BackupVault. Compiles to Velero Schedules.",
+		Attrs: []attr{
+			{Name: "rules", Type: tObjectList, Required: true, Description: "One or more backup rules; each becomes a Velero Schedule.", Nested: []attr{
+				{Name: "name", Type: tString, Required: true, Description: "Rule name, unique within the plan (becomes part of the Schedule name)."},
+				{Name: "schedule", Type: tString, Required: true, Description: "Cron schedule for this rule, e.g. \"0 3 * * *\" (daily at 03:00)."},
+				{Name: "retention_days", Type: tInt, Description: "How long to keep each backup from this rule, in days (Velero TTL). Defaults to 30."},
+				{Name: "target_vault", Type: tString, Required: true, Description: "The BackupVault (by name) these backups are stored in."},
+			}},
+			{Name: "selection", Type: tObject, Description: "What to back up. Defaults to all namespaces excluding the system/backup ones.", Nested: []attr{
+				{Name: "included_namespaces", Type: tStringList, Description: "Namespaces to back up (default [\"*\"] — all, minus the system excludes)."},
+				{Name: "label_selector", Type: tStringMap, Description: "Only back up objects matching these labels (matchLabels)."},
+				{Name: "included_resources", Type: tStringList, Description: "Restrict to these resource types (default: all)."},
+			}},
+		},
+		Status: []statusAttr{
+			{Name: "schedule_count", Type: tInt, Description: "Number of Velero Schedules this plan generated."},
+		},
+	},
+	{
 		TypeName: "function", Kind: "Function", Plural: "functions",
 		Description: "A serverless function — a container that scales to zero between requests. " +
 			"Compiles to a Knative Service.",
@@ -75,6 +105,8 @@ var genericKinds = []kindSpec{
 				Description: "Run handler code on a managed runtime base image instead of a BYO container (the Lambda Zip+handler model). Use this OR image.",
 				Nested: []attr{
 					{Name: "runtime", Type: tString, Required: true, Description: "Managed runtime base image for the handler: python3.12 or nodejs20."},
+					{Name: "region", Type: tString, Description: "AWS region reported to the handler as AWS_REGION / AWS_DEFAULT_REGION (the Lambda runtime var). Defaults to us-east-1."},
+					{Name: "allow_egress", Type: tBool, Description: "Allow this function's pods to reach outside the cluster. Only meaningful with an unsupported (BYO) runtime, which is egress-denied by default; ignored otherwise."},
 					{Name: "handler", Type: tString, Required: true, Description: "Entrypoint <module>.<function>, e.g. app.handler."},
 					{Name: "source", Type: tObject,
 						Description: "Where the handler code lives — configMap (inline) or bucket+key (zip).",

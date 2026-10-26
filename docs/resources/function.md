@@ -17,18 +17,21 @@ A serverless function — a container that scales to zero between requests. Comp
 
 ### Required
 
-- `image` (String) Container image serving HTTP.
 - `name` (String) Resource name. Changing it replaces the resource.
 
 ### Optional
 
+- `aliases` (Attributes List) Weighted traffic targets (the Lambda alias/version analog): each routes a percent of traffic to a pinned revision or the latest, addressable at `<name>-<function>`. Weights must sum to 100. Maps to the Knative traffic block (canary / blue-green). (see [below for nested schema](#nestedatt--aliases))
+- `code` (Attributes) Run handler code on a managed runtime base image instead of a BYO container (the Lambda Zip+handler model). Use this OR image. (see [below for nested schema](#nestedatt--code))
 - `env` (Attributes List) (see [below for nested schema](#nestedatt--env))
 - `expose` (Boolean) Reachable on the LAN via the Knative gateway. `false` keeps it cluster-local.
 - `gpu` (Number) GPUs per instance, for serverless inference. `0` is CPU-only.
+- `image` (String) Container image serving HTTP. Use this OR code.
 - `memory` (String) Guaranteed memory per instance as a Kubernetes quantity (e.g. `512Mi`, `1Gi`) — the AWS Lambda memory-size knob. Set as both request and limit; unset means the cluster default.
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
 - `port` (Number) Port the container listens on.
 - `queues` (List of String) Queues this function works with. Injects `NATS_URL` and `OPENINFRA_QUEUES`.
+- `reserved_concurrency` (Number) The AWS Lambda reserved-concurrency analog: a HARD cap on concurrent requests. When set, the function runs one request per instance with at most this many instances (overriding `scaling.max`/`target`; `scaling.min` still sets the warm floor). Unset means request-driven scaling applies.
 - `scaling` (Attributes) (see [below for nested schema](#nestedatt--scaling))
 - `secrets` (List of String) Secrets to inject with `envFrom` — an app's database or bucket credentials, say.
 - `security_groups` (List of String) SecurityGroups to attach to this function's pods.
@@ -40,6 +43,55 @@ A serverless function — a container that scales to zero between requests. Comp
 - `id` (String) `namespace/name`, the import identifier.
 - `ready` (Boolean) Whether the resource's Ready condition is True. Terraform returns as soon as the object is accepted, so this is usually `false` immediately after apply — the platform reconciles asynchronously.
 - `url` (String) The function's HTTP endpoint.
+
+<a id="nestedatt--aliases"></a>
+### Nested Schema for `aliases`
+
+Required:
+
+- `name` (String) Alias name — also a Knative traffic tag.
+- `weight` (Number) Percent of traffic to this target; all weights must sum to 100.
+
+Optional:
+
+- `revision` (String) `latest` (default) or a specific Knative revision name (a pinned version).
+
+
+<a id="nestedatt--code"></a>
+### Nested Schema for `code`
+
+Required:
+
+- `handler` (String) Entrypoint <module>.<function>, e.g. app.handler.
+- `runtime` (String) Managed runtime base image for the handler: python3.12 or nodejs20.
+
+Optional:
+
+- `allow_egress` (Boolean) Allow this function's pods to reach outside the cluster. Only meaningful with an unsupported (BYO) runtime, which is egress-denied by default; ignored otherwise.
+- `layers` (Attributes List) Lambda layers: .zip artifacts extracted (merged, in order) into /opt at startup so the handler can import shared code/deps they provide. Fetched with the same S3 creds as `source.secret`, so layers require a bucket source. (see [below for nested schema](#nestedatt--code--layers))
+- `region` (String) AWS region reported to the handler as AWS_REGION / AWS_DEFAULT_REGION (the Lambda runtime var). Defaults to us-east-1.
+- `source` (Attributes) Where the handler code lives — configMap (inline) or bucket+key (zip). (see [below for nested schema](#nestedatt--code--source))
+
+<a id="nestedatt--code--layers"></a>
+### Nested Schema for `code.layers`
+
+Required:
+
+- `bucket` (String) Bucket holding the layer .zip.
+- `key` (String) Object key of the layer .zip.
+
+
+<a id="nestedatt--code--source"></a>
+### Nested Schema for `code.source`
+
+Optional:
+
+- `bucket` (String) Bucket holding the code .zip (fetched + unzipped at startup).
+- `config_map` (String) ConfigMap whose keys are the handler source files (mounted at /var/task).
+- `key` (String) Object key of the .zip within the bucket.
+- `secret` (String) Secret carrying S3 creds for the bucket.
+
+
 
 <a id="nestedatt--env"></a>
 ### Nested Schema for `env`

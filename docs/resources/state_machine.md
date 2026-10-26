@@ -23,6 +23,7 @@ A workflow that orchestrates Functions in Amazon States Language (ASL) — open-
 ### Optional
 
 - `namespace` (String) Kubernetes namespace. Changing it replaces the resource.
+- `role_arn` (String) Optional execution role, the analogue of aws_sfn_state_machine.role_arn. An arn:aws:iam::<acct>:role/<name> or a bare kind: Role name; when set, StartExecution mints a temporary STS session for it and the engine runs every Task under it.
 - `type` (String) Workflow class. One of: `Standard`. Only Standard (durable, checkpointed) is implemented; Express is planned.
 
 ### Read-Only

@@ -28,6 +28,7 @@ A pooled, connection-bounded endpoint in front of a managed SQL-Server/Babelfish
 - `pool_max` (Number) Max backend connections opened per credential key. Beyond this, clients queue — the connection ceiling. Defaults to `20`.
 - `replicas` (Number) Proxy Deployment replicas. Defaults to `1`.
 - `tls` (Attributes) Terminate client TLS at the proxy (`encrypt=on` / `strict`, the modes JDBC/ODBC/.NET default to). Off unless `terminate` is set; the backend connection stays plaintext. (see [below for nested schema](#nestedatt--tls))
+- `transaction_multiplexing` (Boolean) Multiplex clients onto fewer backend connections at transaction granularity (the RDS-Proxy-style `-tx-multiplex` path). Off by default (connection-level reuse); on, autocommit statements release the backend per-transaction and unsharable state pins to a dedicated backend. Defaults to `false`.
 
 ### Read-Only
 

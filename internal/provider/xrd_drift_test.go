@@ -38,6 +38,11 @@ func TestKindsMatchXRDs(t *testing.T) {
 	// reason. Generic keys are "Kind.dotted.leaf.path"; bespoke keys are "<type_name>.field".
 	// Every entry is a field a user cannot set through Terraform — keep them justified.
 	omitted := map[string]bool{
+		"Function.code.runtimeImage":       true, // BYO base image for an unsupported/EOL runtime — migration escape hatch, set on the CR/GitOps, not normal Terraform authoring
+		"Function.code.unsupportedRuntime": true, // the explicit opt-in that unlocks code.runtimeImage; same migration-only escape hatch
+		"application.quota":                true, // capacity quota (Service/pod ceilings); operational, set via kubectl/GitOps, not the curated flat resource
+		"database.placement":               true, // sqlserver-only nodeSelector for large-DB placement; operational, set via kubectl/GitOps (as application.subnet is)
+		"database.restoreFrom":             true, // restore-a-backup-on-bring-up (the migration landing path); advanced, set on the CR/GitOps
 		// ModelMonitor.threshold is a float; the generic attr table has no float type yet.
 		// Use the default (0.2) or set it via the console/kubectl until a tFloat is added.
 		"ModelMonitor.threshold": true,
@@ -156,6 +161,7 @@ func TestKindsMatchXRDs(t *testing.T) {
 	// brand-new upstream kind can't ship with no Terraform support and still pass CI (as the IAM/governance
 	// kinds below already do — intentionally console-managed, not Terraform-exposed). ---
 	excludedKinds := map[string]string{
+		"ConfigRule":         "Kyverno compliance rule; its requirePattern is a freeform preserve-unknown validate pattern the typed provider can't model — authored on the CR/GitOps (opt-in compliance component)",
 		"EncryptionKey":      "console/IAM-managed Vault Transit key; not Terraform-exposed",
 		"DataClassification": "console-managed data-categorization policy; not Terraform-exposed",
 		"Destruction":        "irreversible crypto-erase — a deliberate console/admin act, never Terraform-declared",

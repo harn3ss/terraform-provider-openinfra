@@ -17,12 +17,14 @@ A managed database — a data-only `kind: Application`. Compiles to the engine's
 
 ### Required
 
-- `engine` (String) One of `postgres`, `mysql`, `mongo`, `babelfish`. Changing the engine replaces the database — the storage layout differs per engine.
+- `engine` (String) One of `postgres`, `mysql`, `mongo`, `babelfish`, `sqlserver`. Changing the engine replaces the database — the storage layout differs per engine. `sqlserver` is REAL Microsoft SQL Server and is opt-in: it requires `accept_eula = true`.
 - `name` (String)
 
 ### Optional
 
+- `accept_eula` (Boolean) `sqlserver` only: set `true` to accept Microsoft's SQL Server EULA. REQUIRED for `engine = sqlserver` — the engine fails closed and provisions nothing until you do. open-infra never accepts it for you.
 - `database_name` (String) Logical database name. Defaults to the resource name.
+- `edition` (String) `sqlserver` only: SQL Server edition (MSSQL_PID) — `Developer` (free, non-production; the engine default), `Evaluation` (180-day), or `Express` (free, 10GB/database cap). Production needs a licensed edition (BYOL).
 - `encryption_key` (String) Name of the `kind: EncryptionKey` (a Vault Transit KEK) protecting the database's storage. Required when `storage_encrypted` is true.
 - `expose` (Boolean) Publish the database on a LAN address.
 - `high_availability` (Boolean) Run a replicated/clustered topology where the engine supports it.
