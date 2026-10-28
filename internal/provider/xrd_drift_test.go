@@ -40,9 +40,12 @@ func TestKindsMatchXRDs(t *testing.T) {
 	omitted := map[string]bool{
 		"Function.code.runtimeImage":       true, // BYO base image for an unsupported/EOL runtime — migration escape hatch, set on the CR/GitOps, not normal Terraform authoring
 		"Function.code.unsupportedRuntime": true, // the explicit opt-in that unlocks code.runtimeImage; same migration-only escape hatch
+		"Function.burstable":               true, // opt-in Lambda burstable-memory model; set during the capacity rollout (per-wave, quota-first), not casual Terraform authoring
+		"Function.memoryRequest":           true, // per-runtime memory-floor override; companion to burstable, set on the CR during the rollout
 		"application.quota":                true, // capacity quota (Service/pod ceilings); operational, set via kubectl/GitOps, not the curated flat resource
 		"database.placement":               true, // sqlserver-only nodeSelector for large-DB placement; operational, set via kubectl/GitOps (as application.subnet is)
 		"database.restoreFrom":             true, // restore-a-backup-on-bring-up (the migration landing path); advanced, set on the CR/GitOps
+		"database.recoveryModel":           true, // sqlserver recovery model (simple|full); operational, set on the CR/console (as database.placement is)
 		// ModelMonitor.threshold is a float; the generic attr table has no float type yet.
 		// Use the default (0.2) or set it via the console/kubectl until a tFloat is added.
 		"ModelMonitor.threshold": true,
@@ -58,6 +61,7 @@ func TestKindsMatchXRDs(t *testing.T) {
 		// Not currently exposed by the flat resource; potential enhancements, tracked here so a
 		// genuinely NEW VM spec field still fails the guard rather than slipping in silently.
 		"virtual_machine.existingRootClaim": true, // advanced restore path (adopt an existing root disk)
+		"virtual_machine.firmware":          true, // boot mode (bios|uefi/Secure Boot/vTPM) — a nested object; migration companion to existingRootClaim, set on the CR/console, not the flat resource
 		"virtual_machine.expose":            true,
 		"virtual_machine.ports":             true, // list; flat resource exposes no port list
 		"virtual_machine.securityGroups":    true, // list; SG attach not yet in HCL
